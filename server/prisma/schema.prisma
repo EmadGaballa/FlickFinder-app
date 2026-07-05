@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  displayName   String
+  email         String   @unique
+  passwordHash  String
+  avatar        String?  @default("1")
+  createdAt     DateTime @default(now())
+  displayNameUpdatedAt DateTime?
+
+  favorites  Favorite[]
+  watchlists Watchlist[]
+  ratings    Rating[]
+
+  sentRequests     FriendRequest[] @relation("SentRequests")
+  receivedRequests FriendRequest[] @relation("ReceivedRequests")
+  friendships      Friendship[]    @relation("UserFriendships")
+  friendOf         Friendship[]    @relation("FriendOf")
+
+  @@map("users")
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  movieId   Int
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating Rating?
+
+  @@unique([userId, movieId])
+  @@map("favorites")
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  movieId   Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, movieId])
+  @@map("watchlists")
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  userId    String
+  movieId   Int
+  score     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  favorite Favorite? @relation(fields: [userId, movieId], references: [userId, movieId])
+
+  @@unique([userId, movieId])
+  @@map("ratings")
+}
+
+model FriendRequest {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@map("friend_requests")
+}
+
+model Friendship {
+  id       String @id @default(cuid())
+  userId   String
+  friendId String
+  createdAt DateTime @default(now())
+
+  user   User @relation("UserFriendships", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@map("friendships")
+}

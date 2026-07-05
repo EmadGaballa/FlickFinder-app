@@ -128,8 +128,8 @@ body {
 
 .hero-headline {
     font-family: var(--font-serif);
-    font-size: clamp(3rem, 9vw, 7rem);
-    line-height: 1.0;
+    font-size: clamp(3rem, 9vw, 6rem);
+    line-height: 7.3rem;
     color: var(--text-primary);
     opacity: 0;
     animation: slide-up 0.9s 0.4s forwards;
@@ -217,7 +217,7 @@ body {
 ───────────────────────────────────────────── */
 .popular-section,
 .results-section {
-    padding: 1rem 2rem;
+    padding: 1rem 3rem;
     max-width: 1400px;
     margin: 0 auto;
 }

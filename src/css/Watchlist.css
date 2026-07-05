@@ -1,78 +1,63 @@
-/* ── Favorites Page ────────────────────────────── */
-.favorites-page {
+/* ── Watchlist Page ────────────────────────────── */
+.watchlist-page {
   min-height: 100vh;
 }
 
-.favorites-header {
+.watchlist-header {
   padding: 4rem 2rem 2rem;
   max-width: 1400px;
   margin: 0 auto;
   margin-top: 2rem;
 }
 
-.favorites-title {
+.watchlist-title {
   font-family: var(--font-serif);
   font-size: clamp(1.8rem, 4vw, 2.5rem);
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
-.favorites-subtitle {
+.watchlist-subtitle {
   color: var(--text-secondary);
   font-size: 1rem;
 }
 
-.favorites-content {
+.watchlist-content {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem 4rem;
 }
 
-.favorites-grid {
+.watchlist-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 1.5rem;
 }
 
-.favorite-item {
+.watchlist-item {
   position: relative;
 }
 
-.favorite-rating-badge {
-  position: absolute;
-  top: 0.6rem;
-  left: 0.6rem;
-  background: rgba(9,11,15,0.82);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(245,197,24,0.3);
-  border-radius: 20px;
-  padding: 0.25rem 0.55rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--gold);
-  z-index: 5;
-}
-
-.favorites-empty-state {
+.watchlist-empty {
   text-align: center;
   padding: 4rem 2rem;
   color: var(--text-muted);
 }
 
-.favorites-empty-state span {
+.watchlist-empty span {
   display: block;
   font-size: 2rem;
   margin-bottom: 0.5rem;
 }
 
 @media (max-width: 768px) {
-  .favorites-header {
+  .watchlist-header {
     padding: 3rem 1.25rem 1.5rem;
   }
-  .favorites-content {
+  .watchlist-content {
     padding: 0 1.25rem 3rem;
   }
-  .favorites-grid {
+  .watchlist-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }

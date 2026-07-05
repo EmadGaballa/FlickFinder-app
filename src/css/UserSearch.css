@@ -1,0 +1,208 @@
+/* ── User Search Page ─────────────────────────── */
+.search-users-page {
+  min-height: 100vh;
+}
+
+.search-users-header {
+  padding: 4rem 2rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.search-users-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.search-users-subtitle {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.search-users-form {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 2rem 2rem;
+}
+
+.search-users-inner {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius);
+  padding: 0 1rem;
+  backdrop-filter: blur(16px);
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.search-users-inner:focus-within {
+  border-color: rgba(245,197,24,0.5);
+  background: rgba(255,255,255,0.1);
+}
+
+.search-users-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  margin-right: 0.75rem;
+}
+
+.search-users-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 1rem 0;
+  caret-color: var(--gold);
+}
+
+.search-users-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-users-results {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 2rem 4rem;
+}
+
+.search-users-loading {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 0;
+}
+
+/* ── User Card ────────────────────────────────── */
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.15s ease;
+}
+
+.user-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(245,197,24,0.2);
+  transform: translateX(4px);
+}
+
+.user-card-link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.user-card-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid rgba(245,197,24,0.2);
+}
+
+.user-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-card-name {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.user-card-username {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.user-card-friends {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.user-card-action {
+  flex-shrink: 0;
+}
+
+.friend-add-btn {
+  padding: 0.4rem 0.9rem;
+  background: rgba(245,197,24,0.1);
+  border: 1px solid rgba(245,197,24,0.3);
+  border-radius: 20px;
+  color: var(--gold);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.friend-add-btn:hover:not(:disabled) {
+  background: rgba(245,197,24,0.18);
+  border-color: rgba(245,197,24,0.5);
+}
+
+.friend-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.friend-added-badge {
+  padding: 0.4rem 0.9rem;
+  background: rgba(76,175,80,0.1);
+  border: 1px solid rgba(76,175,80,0.3);
+  border-radius: 20px;
+  color: #4caf50;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.no-results {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.no-results span {
+  display: block;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .search-users-header {
+    padding: 3rem 1.25rem 1.5rem;
+  }
+  .search-users-form {
+    padding: 0 1.25rem 1.5rem;
+  }
+  .search-users-results {
+    padding: 0 1.25rem 3rem;
+  }
+}
