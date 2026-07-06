@@ -81,9 +81,8 @@ function Profile() {
     };
   }, [isAuthenticated, currentUser, username, isOwnProfile]);
 
-  // Makes the backdrop scroll slightly slower than the rest of the page
-  // (a "parallax" effect). It updates a ref directly instead of calling
-  // setState, so scrolling never causes React to re-render the page.
+  // Makes the backdrop scroll slightly slower than the rest of the page.
+  // Updates a ref directly (no setState) so scrolling never re-renders React.
   useEffect(() => {
     if (!bannerMovie?.backdrop_path) return;
     let ticking = false;
@@ -179,55 +178,84 @@ function Profile() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="profile-header">
-        <div className="profile-header-bg" />
-        <div className="profile-header-content">
-          <Avatar id={profile.avatar} size={100} />
-          <div className="profile-info">
-            <h1 className="profile-display-name">{profile.displayName}</h1>
-            <p className="profile-username">@{profile.username}</p>
-            <p className="profile-joined">
-              Joined {new Date(profile.createdAt).toLocaleDateString()}
-            </p>
-            <div className="profile-stats">
-              <div className="profile-stat">
-                <div className="profile-stat-value">{stats.totalFavorites}</div>
-                <div className="profile-stat-label">Favorites</div>
-              </div>
-              <div className="profile-stat">
-                <div className="profile-stat-value">{stats.totalWatchlist}</div>
-                <div className="profile-stat-label">Watchlist</div>
-              </div>
-              <div className="profile-stat">
-                <div className="profile-stat-value">{stats.totalRatings}</div>
-                <div className="profile-stat-label">Ratings</div>
-              </div>
-              <div className="profile-stat">
-                <div className="profile-stat-value">{avgRating}</div>
-                <div className="profile-stat-label">Avg Rating</div>
-              </div>
-              <div className="profile-stat">
-                <div className="profile-stat-value">{stats.totalFriends}</div>
-                <div className="profile-stat-label">Friends</div>
+      {/* Header — content sits directly over the hero's darkened base */}
+      <div
+        className={`profile-header${heroBackdrop ? " profile-header--with-hero" : ""}`}
+      >
+        <div className="profile-header-inner">
+          <div className="profile-header-main">
+            <div className="profile-avatar-wrap">
+              <Avatar id={profile.avatar} size={100} className="profile-avatar" />
+            </div>
+            <div className="profile-info">
+              <h1 className="profile-display-name">{profile.displayName}</h1>
+              <p className="profile-username">@{profile.username}</p>
+              <p className="profile-joined">
+                Joined {new Date(profile.createdAt).toLocaleDateString()}
+              </p>
+              <div className="profile-stats">
+                <div className="profile-stat">
+                  <div className="profile-stat-value">{stats.totalFavorites}</div>
+                  <div className="profile-stat-label">Favorites</div>
+                </div>
+                <div className="profile-stat">
+                  <div className="profile-stat-value">{stats.totalWatchlist}</div>
+                  <div className="profile-stat-label">Watchlist</div>
+                </div>
+                <div className="profile-stat">
+                  <div className="profile-stat-value">{stats.totalRatings}</div>
+                  <div className="profile-stat-label">Ratings</div>
+                </div>
+                <div className="profile-stat">
+                  <div className="profile-stat-value">{avgRating}</div>
+                  <div className="profile-stat-label">Avg Rating</div>
+                </div>
+                <div className="profile-stat">
+                  <div className="profile-stat-value">{stats.totalFriends}</div>
+                  <div className="profile-stat-label">Friends</div>
+                </div>
               </div>
             </div>
           </div>
-          {isAuthenticated && !isOwnProfile && (
-            <div className="profile-friend-action">
-              {isFriend ? (
-                <span className="profile-friend-badge">✓ Friends</span>
-              ) : (
-                <button
-                  className="profile-friend-btn"
-                  onClick={handleFriendRequest}
-                  disabled={friendLoading}
+
+          <div className="profile-header-aside">
+            {isAuthenticated && !isOwnProfile && (
+              <div className="profile-friend-action">
+                {isFriend ? (
+                  <span className="profile-friend-badge">✓ Friends</span>
+                ) : (
+                  <button
+                    className="profile-friend-btn"
+                    onClick={handleFriendRequest}
+                    disabled={friendLoading}
+                  >
+                    {friendLoading ? "Sending..." : "Add Friend"}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {isOwnProfile && bannerMovie && (
+              <div className="profile-top-pick">
+                <span className="profile-top-pick-label">Top Pick</span>
+                <Link
+                  to={`/movie/${bannerMovie.id}`}
+                  className="profile-top-pick-title"
                 >
-                  {friendLoading ? "Sending..." : "Add Friend"}
-                </button>
-              )}
-            </div>
-          )}
+                  {bannerMovie.title}
+                </Link>
+                {bannerMovie.genres?.length > 0 && (
+                  <div className="profile-top-pick-genres">
+                    {bannerMovie.genres.slice(0, 3).map((g) => (
+                      <span key={g.id} className="profile-top-pick-genre">
+                        {g.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
