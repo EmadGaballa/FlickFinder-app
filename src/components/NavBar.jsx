@@ -92,17 +92,14 @@ function NavBar() {
         {!loading && user && (
           <>
             <Link
-              to="/favorites"
-              className={`nav-link${isActive("/favorites") ? " nav-link--active" : ""}`}
+              to={`/profile/${user.username}`}
+              className={`nav-link${
+                location.pathname === `/profile/${user.username}`
+                  ? " nav-link--active"
+                  : ""
+              }`}
             >
-              Favorites
-            </Link>
-
-            <Link
-              to="/watchlist"
-              className={`nav-link${isActive("/watchlist") ? " nav-link--active" : ""}`}
-            >
-              Watchlist
+              Collection
             </Link>
 
             <div className="navbar-profile" ref={profileRef}>
@@ -124,14 +121,7 @@ function NavBar() {
               </button>
               {profileOpen && (
                 <div className="nav-profile-dropdown">
-                  <Link
-                    to={`/profile/${user.username}`}
-                    className="nav-dropdown-item"
-                    onClick={() => setProfileOpen(false)}
-                  >
-                    <span>👤</span> Profile
-                  </Link>
-
+        
                   <Link
                     to="/friends"
                     className="nav-dropdown-item"
@@ -186,10 +176,14 @@ function NavBar() {
         {user && (
           <>
             <Link
-              to="/watchlist"
-              className={`drawer-link${isActive("/watchlist") ? " drawer-link--active" : ""}`}
+              to={`/profile/${user.username}?tab=favorites`}
+              className={`drawer-link${
+                location.pathname === `/profile/${user.username}`
+                  ? " drawer-link--active"
+                  : ""
+              }`}
             >
-              Watchlist
+              Collection
             </Link>
             <Link
               to="/friends"

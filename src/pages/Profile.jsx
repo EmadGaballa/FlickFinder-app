@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import {
   usersApi,
   favoritesApi,
@@ -21,7 +21,17 @@ function Profile() {
   const [ratings, setRatings] = useState([]);
   const [friends, setFriends] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("favorites");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const validTabs = ["favorites", "watchlist", "ratings"];
+
+  const activeTab = validTabs.includes(searchParams.get("tab"))
+    ? searchParams.get("tab")
+    : "favorites";
+
+  const changeTab = (tab) => {
+    setSearchParams({ tab });
+  };
   const [isFriend, setIsFriend] = useState(false);
   const [friendLoading, setFriendLoading] = useState(false);
   const [ratingsSort, setRatingsSort] = useState("highest");
@@ -185,7 +195,11 @@ function Profile() {
         <div className="profile-header-inner">
           <div className="profile-header-main">
             <div className="profile-avatar-wrap">
-              <Avatar id={profile.avatar} size={150} className="profile-avatar" />
+              <Avatar
+                id={profile.avatar}
+                size={150}
+                className="profile-avatar"
+              />
             </div>
             <div className="profile-info">
               <h1 className="profile-display-name">{profile.displayName}</h1>
@@ -195,11 +209,15 @@ function Profile() {
               </p>
               <div className="profile-stats">
                 <div className="profile-stat">
-                  <div className="profile-stat-value">{stats.totalFavorites}</div>
+                  <div className="profile-stat-value">
+                    {stats.totalFavorites}
+                  </div>
                   <div className="profile-stat-label">Favorites</div>
                 </div>
                 <div className="profile-stat">
-                  <div className="profile-stat-value">{stats.totalWatchlist}</div>
+                  <div className="profile-stat-value">
+                    {stats.totalWatchlist}
+                  </div>
                   <div className="profile-stat-label">Watchlist</div>
                 </div>
                 <div className="profile-stat">
@@ -263,19 +281,19 @@ function Profile() {
       <div className="profile-tabs">
         <button
           className={`profile-tab${activeTab === "favorites" ? " profile-tab--active" : ""}`}
-          onClick={() => setActiveTab("favorites")}
+          onClick={() => changeTab("favorites")}
         >
           Favorites ({favorites.length})
         </button>
         <button
           className={`profile-tab${activeTab === "watchlist" ? " profile-tab--active" : ""}`}
-          onClick={() => setActiveTab("watchlist")}
+          onClick={() => changeTab("watchlist")}
         >
           Watchlist ({watchlist.length})
         </button>
         <button
           className={`profile-tab${activeTab === "ratings" ? " profile-tab--active" : ""}`}
-          onClick={() => setActiveTab("ratings")}
+          onClick={() => changeTab("ratings")}
         >
           Ratings ({ratings.length})
         </button>
