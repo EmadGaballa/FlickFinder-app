@@ -185,7 +185,7 @@ function Profile() {
         <div className="profile-header-inner">
           <div className="profile-header-main">
             <div className="profile-avatar-wrap">
-              <Avatar id={profile.avatar} size={100} className="profile-avatar" />
+              <Avatar id={profile.avatar} size={150} className="profile-avatar" />
             </div>
             <div className="profile-info">
               <h1 className="profile-display-name">{profile.displayName}</h1>

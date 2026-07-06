@@ -67,7 +67,7 @@ export function AvatarBase({
     <svg
       width={size}
       height={size}
-      viewBox="0 0 100 100"
+      viewBox="-8 -8 116 116"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       style={{
@@ -97,11 +97,9 @@ export function AvatarBase({
         {/* =======================================
              Rounded clipping mask
         ======================================== */}
-
         <clipPath id={clipId}>
-          <rect x="4" y="4" width="92" height="92" rx="22" />
+          <rect x="0" y="0" width="100" height="100" rx="22" />
         </clipPath>
-
         {/* =======================================
              Ambient Shadow
         ======================================== */}
@@ -213,12 +211,7 @@ export function AvatarBase({
            Avatar Artwork
       ====================================================== */}
 
-      <g
-        clipPath={`url(#${clipId})`}
-        filter={glowColor ? `url(#${glowId})` : undefined}
-      >
-        {children}
-      </g>
+      <g filter={glowColor ? `url(#${glowId})` : undefined}>{children}</g>
 
       {/* ======================================================
            Optional Glow Tint Overlay

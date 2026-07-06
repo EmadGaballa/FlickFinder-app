@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { usersApi, authApi } from "../services/backendApi";
 import AvatarPicker from "../components/AvatarPicker";
-import Avatar from "../components/Avatar";
+import { getAvatarById } from "../data/avatars/index";
 import "../css/Settings.css";
 
 function Settings() {
@@ -12,7 +12,6 @@ function Settings() {
 
   const [displayName, setDisplayName] = useState("");
   const [avatar, setAvatar] = useState("1");
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -39,7 +38,7 @@ function Settings() {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
-      const res = await usersApi.updateProfile({
+      await usersApi.updateProfile({
         displayName: displayName !== user.displayName ? displayName : undefined,
         avatar: avatar !== user.avatar ? avatar : undefined,
       });
@@ -57,7 +56,10 @@ function Settings() {
     setMessage({ type: "", text: "" });
 
     if (newPassword.length < 8) {
-      setMessage({ type: "error", text: "New password must be at least 8 characters" });
+      setMessage({
+        type: "error",
+        text: "New password must be at least 8 characters",
+      });
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -100,6 +102,9 @@ function Settings() {
     );
   }
 
+  const selectedAvatar = getAvatarById(avatar);
+  const AvatarPreview = selectedAvatar?.Icon;
+
   return (
     <div className="settings-page">
       <div className="settings-header">
@@ -116,44 +121,61 @@ function Settings() {
 
         {/* Profile Section */}
         <section className="settings-section">
-          <h2 className="settings-section-title">Profile</h2>
-          <form onSubmit={handleSaveProfile} className="settings-form">
-            <div className="settings-avatar-row">
-              <Avatar id={avatar} size={64} />
-              <button type="button" className="settings-avatar-btn" onClick={() => setShowAvatarPicker(true)}>
-                Change Avatar
+          <div className="settings-profile-card">
+            <form onSubmit={handleSaveProfile} className="settings-form">
+              {/* Large avatar preview */}
+              <div className="settings-avatar-preview">
+                {AvatarPreview && <AvatarPreview size={96} />}
+                <div className="settings-avatar-preview-label">
+                  Choose your avatar
+                </div>
+              </div>
+
+              {/* Inline avatar picker */}
+              <div className="settings-avatar-picker-wrap">
+                <AvatarPicker
+                  selectedId={avatar}
+                  onSelect={(id) => setAvatar(id)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Username</label>
+                <input
+                  type="text"
+                  value={user.username}
+                  disabled
+                  className="form-input form-input--disabled"
+                />
+                <span className="form-hint">
+                  Username is permanent and cannot be changed.
+                </span>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Display Name</label>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="form-input"
+                  placeholder="Your display name"
+                />
+                <span className="form-hint">
+                  Can be changed once every 10 days.
+                </span>
+              </div>
+
+              <button
+                type="submit"
+                className="settings-submit"
+                disabled={saving}
+              >
+                {saving ? "Saving..." : "Save Profile"}
               </button>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Username</label>
-              <input
-                type="text"
-                value={user.username}
-                disabled
-                className="form-input form-input--disabled"
-              />
-              <span className="form-hint">Username is permanent and cannot be changed.</span>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Display Name</label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className="form-input"
-                placeholder="Your display name"
-              />
-              <span className="form-hint">Can be changed once every 10 days.</span>
-            </div>
-
-            <button type="submit" className="settings-submit" disabled={saving}>
-              {saving ? "Saving..." : "Save Profile"}
-            </button>
-          </form>
+            </form>
+          </div>
         </section>
-
+        
         {/* Security Section */}
         <section className="settings-section">
           <h2 className="settings-section-title">Security</h2>
@@ -205,17 +227,6 @@ function Settings() {
           </button>
         </section>
       </div>
-
-      {showAvatarPicker && (
-        <AvatarPicker
-          selectedId={avatar}
-          onSelect={(id) => {
-            setAvatar(id);
-            setShowAvatarPicker(false);
-          }}
-          onClose={() => setShowAvatarPicker(false)}
-        />
-      )}
     </div>
   );
 }

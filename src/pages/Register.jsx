@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "../services/backendApi";
 import AvatarPicker from "../components/AvatarPicker";
-import Avatar from "../components/Avatar";
+import { getAvatarById } from "../data/avatars/index";
 import "../css/Auth.css";
 
 function Register() {
@@ -17,7 +17,6 @@ function Register() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
-  const [showPicker, setShowPicker] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -150,10 +149,12 @@ function Register() {
 
           <div className="form-group">
             <label className="form-label">Choose Avatar</label>
-            <button type="button" className="avatar-select-btn" onClick={() => setShowPicker(true)}>
-              <Avatar id={form.avatar} size={32} />
-              <span>Click to choose avatar</span>
-            </button>
+            <div className="register-avatar-inline">
+              <AvatarPicker
+                selectedId={form.avatar}
+                onSelect={(id) => setForm((f) => ({ ...f, avatar: id }))}
+              />
+            </div>
           </div>
 
           <button type="submit" className="auth-submit" disabled={loading}>
@@ -166,13 +167,6 @@ function Register() {
         </form>
       </div>
 
-      {showPicker && (
-        <AvatarPicker
-          selectedId={form.avatar}
-          onSelect={(id) => setForm((f) => ({ ...f, avatar: id }))}
-          onClose={() => setShowPicker(false)}
-        />
-      )}
     </div>
   );
 }

@@ -24,7 +24,7 @@
 }
 
 .settings-content {
-  max-width: 600px;
+  max-width: 500px;
   margin: 0 auto;
   padding: 0 2rem;
   display: flex;
@@ -39,13 +39,66 @@
   padding: 1.75rem;
 }
 
+.settings-section:first-of-type {
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
 .settings-section-title {
   font-family: var(--font-serif);
-  font-size: 1.15rem;
+  font-size: 1.6rem;
   color: var(--text-primary);
   margin-bottom: 1.25rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border);
+}
+
+/* ── Profile Card (preview + picker) ─────────────── */
+.settings-profile-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  margin-bottom: 1.75rem;
+}
+
+.settings-avatar-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-avatar-preview > svg {
+  width: 96px !important;
+  height: 96px !important;
+  border-radius: 22px;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.settings-avatar-preview > svg:hover {
+  transform: scale(1.04);
+}
+
+.settings-avatar-preview-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgb(175, 175, 175);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.settings-avatar-picker-wrap {
+  width: 100%;
+  /* max-width: 440px;  */
+  /* margin: 0 auto; */
 }
 
 .settings-form {
@@ -54,48 +107,28 @@
   gap: 1.25rem;
 }
 
-.settings-avatar-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.settings-avatar-btn {
-  padding: 0.5rem 1rem;
-  background: rgba(245,197,24,0.1);
-  border: 1px solid rgba(245,197,24,0.3);
-  border-radius: 20px;
-  color: var(--gold);
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.3s ease, border-color 0.3s ease;
-}
-
-.settings-avatar-btn:hover {
-  background: rgba(245,197,24,0.18);
-  border-color: rgba(245,197,24,0.5);
-}
+/* Removed .settings-avatar-row and .settings-avatar-btn — now inline picker */
 
 .settings-submit {
   padding: 0.75rem 1.5rem;
-  background: rgba(245,197,24,0.15);
-  border: 1px solid rgba(245,197,24,0.35);
+  background: rgba(245, 197, 24, 0.15);
+  border: 1px solid rgba(245, 197, 24, 0.35);
   border-radius: 25px;
   color: var(--gold);
   font-family: var(--font-body);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.2s ease;
   align-self: flex-start;
 }
 
 .settings-submit:hover:not(:disabled) {
-  background: rgba(245,197,24,0.22);
-  border-color: rgba(245,197,24,0.5);
+  background: rgba(245, 197, 24, 0.22);
+  border-color: rgba(245, 197, 24, 0.5);
   transform: translateY(-1px);
 }
 
@@ -106,24 +139,26 @@
 
 .settings-logout-btn {
   padding: 0.75rem 1.5rem;
-  background: rgba(224,92,52,0.1);
-  border: 1px solid rgba(224,92,52,0.3);
+  background: rgba(224, 92, 52, 0.1);
+  border: 1px solid rgba(224, 92, 52, 0.3);
   border-radius: 25px;
   color: #e05c34;
   font-family: var(--font-body);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease, border-color 0.3s ease;
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease;
 }
 
 .settings-logout-btn:hover {
-  background: rgba(224,92,52,0.18);
-  border-color: rgba(224,92,52,0.5);
+  background: rgba(224, 92, 52, 0.18);
+  border-color: rgba(224, 92, 52, 0.5);
 }
 
 .settings-section--danger {
-  border-color: rgba(224,92,52,0.2);
+  border-color: rgba(224, 92, 52, 0.2);
 }
 
 .settings-section--danger .settings-section-title {
@@ -138,14 +173,14 @@
 }
 
 .settings-message--success {
-  background: rgba(76,175,80,0.1);
-  border: 1px solid rgba(76,175,80,0.3);
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
   color: #4caf50;
 }
 
 .settings-message--error {
-  background: rgba(224,92,52,0.1);
-  border: 1px solid rgba(224,92,52,0.3);
+  background: rgba(224, 92, 52, 0.1);
+  border: 1px solid rgba(224, 92, 52, 0.3);
   color: #e05c34;
 }
 
@@ -157,31 +192,34 @@
 }
 
 .form-label {
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  margin-bottom: 0.3rem;
+  color: rgb(180, 180, 180);
   letter-spacing: 0.02em;
 }
 
 .form-input {
   padding: 0.7rem 1rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 0.95rem;
-  transition: border-color 0.3s ease, background 0.3s ease;
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease;
   outline: none;
 }
 
 .form-input:focus {
-  border-color: rgba(245,197,24,0.5);
-  background: rgba(255,255,255,0.07);
+  border-color: rgba(245, 197, 24, 0.5);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .form-input--error {
-  border-color: rgba(224,92,52,0.5);
+  border-color: rgba(224, 92, 52, 0.5);
 }
 
 .form-input--disabled {
@@ -196,7 +234,7 @@
 
 .form-hint {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: rgb(114, 114, 114);
 }
 
 /* ── Skeleton ──────────────────────────────────── */
@@ -212,17 +250,30 @@
 .skeleton-line {
   height: 1rem;
   border-radius: 4px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.6s infinite;
 }
 
-.skeleton-line.wide { width: 250px; }
-.skeleton-line.medium { width: 150px; }
+.skeleton-line.wide {
+  width: 250px;
+}
+.skeleton-line.medium {
+  width: 150px;
+}
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 @media (max-width: 768px) {

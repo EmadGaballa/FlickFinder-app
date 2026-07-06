@@ -193,7 +193,7 @@
 
 .profile-header-inner {
   position: relative;
-  max-width: 1350px;
+  max-width: 1300px;
   margin: 0 auto;
   display: flex;
   align-items: flex-end;
@@ -208,41 +208,36 @@
   min-width: 0;
 }
 
+
 /* ── Avatar ───────────────────────────────────── */
 .profile-avatar-wrap {
   position: relative;
   flex-shrink: 0;
+  /* Ensures nothing clipping your premium avatar's overflow shapes */
+  background: transparent; 
 }
 
+/* Removed the harsh ::after pseudo background blur to favor the SVG's built-in glow */
 .profile-avatar-wrap::after {
-  content: "";
-  position: absolute;
-  inset: -18px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(var(--hero-primary, 255, 205, 90), 0.22),
-    transparent 70%
-  );
-  filter: blur(30px);
-  z-index: -1;
-  pointer-events: none;
+  display: none;
 }
 
 .profile-avatar {
-  border: 3px solid rgba(var(--hero-primary, 255, 210, 80), 0.55);
-  box-shadow:
-    0 0 0 8px rgba(var(--hero-primary, 255, 210, 80), 0.05),
-    0 20px 50px rgba(0, 0, 0, 0.5);
-  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  /* Stripped away the competing border and heavy outer ring box-shadows */
+  border: none;
+  box-shadow: none;
+  
+  /* Retained high-performance hardware-accelerated transforms for the hover state */
+  will-change: transform;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); /* Snappy, premium elastic pop */
 }
 
+
 .profile-avatar:hover {
-  transform: translateY(-4px) scale(1.04);
-  box-shadow:
-    0 0 0 10px rgba(var(--hero-primary, 255, 210, 80), 0.08),
-    0 28px 60px rgba(0, 0, 0, 0.55);
+  /* Keeps the elegant micro-lift behavior without distorting the internal vector details */
+  transform: translateY(-1px) scale(1.03);
 }
+
 
 /* ── Name / Meta ──────────────────────────────── */
 .profile-info {
