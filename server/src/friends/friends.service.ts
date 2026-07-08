@@ -20,7 +20,7 @@ export interface FriendRequestWithUser {
 
 export async function sendFriendRequest(
   senderId: string,
-  targetUsername: string
+  targetUsername: string,
 ): Promise<{ message: string; status?: number }> {
   const targetUser = await prisma.user.findUnique({
     where: { username: targetUsername },
@@ -56,7 +56,9 @@ export async function sendFriendRequest(
 
   // Check if they sent us a request
   const reverse = await prisma.friendRequest.findUnique({
-    where: { senderId_receiverId: { senderId: targetUser.id, receiverId: senderId } },
+    where: {
+      senderId_receiverId: { senderId: targetUser.id, receiverId: senderId },
+    },
   });
 
   if (reverse) {
@@ -85,7 +87,7 @@ export async function sendFriendRequest(
 
 export async function acceptFriendRequest(
   receiverId: string,
-  senderUsername: string
+  senderUsername: string,
 ): Promise<void> {
   const sender = await prisma.user.findUnique({
     where: { username: senderUsername },
@@ -118,7 +120,7 @@ export async function acceptFriendRequest(
 
 export async function rejectFriendRequest(
   receiverId: string,
-  senderUsername: string
+  senderUsername: string,
 ): Promise<void> {
   const sender = await prisma.user.findUnique({
     where: { username: senderUsername },
@@ -142,9 +144,34 @@ export async function rejectFriendRequest(
   });
 }
 
+export async function cancelFriendRequest(
+  senderId: string,
+  targetUsername: string,
+): Promise<void> {
+  const target = await prisma.user.findUnique({
+    where: { username: targetUsername },
+  });
+
+  if (!target) {
+    throw new AppError(404, "User not found");
+  }
+
+  const request = await prisma.friendRequest.findUnique({
+    where: { senderId_receiverId: { senderId, receiverId: target.id } },
+  });
+
+  if (!request || request.status !== "pending") {
+    throw new AppError(404, "No pending friend request found");
+  }
+
+  await prisma.friendRequest.delete({
+    where: { id: request.id },
+  });
+}
+
 export async function removeFriend(
   userId: string,
-  friendUsername: string
+  friendUsername: string,
 ): Promise<void> {
   const friend = await prisma.user.findUnique({
     where: { username: friendUsername },
@@ -213,7 +240,10 @@ export async function getFriendRequests(userId: string): Promise<{
   });
 
   const sent = await prisma.friendRequest.findMany({
-    where: { senderId: userId },
+    where: {
+      senderId: userId,
+      status: "pending",
+    },
     include: {
       receiver: {
         select: {

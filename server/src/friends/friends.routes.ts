@@ -13,6 +13,9 @@ router.post("/accept/:username", authenticate, friendsController.acceptRequest);
 // POST /friends/reject/:username
 router.post("/reject/:username", authenticate, friendsController.rejectRequest);
 
+// DELETE /friends/request/:username - Cancel outgoing request
+router.delete("/request/:username", authenticate, friendsController.cancelRequest);
+
 // DELETE /friends/remove/:username
 router.delete("/remove/:username", authenticate, friendsController.removeFriend);
 

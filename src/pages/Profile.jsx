@@ -10,7 +10,10 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import Avatar from "../components/Avatar";
 import MovieCard from "../components/MovieCard";
+import ConfirmModal from "../components/ConfirmModal";
 import "../css/Profile.css";
+import "../css/Friends.css";
+import "../css/ConfirmModal.css";
 
 function Profile() {
   const { username } = useParams();
@@ -32,10 +35,11 @@ function Profile() {
   const changeTab = (tab) => {
     setSearchParams({ tab });
   };
-  const [isFriend, setIsFriend] = useState(false);
+  const [relationshipStatus, setRelationshipStatus] = useState("NONE");
   const [friendLoading, setFriendLoading] = useState(false);
   const [ratingsSort, setRatingsSort] = useState("highest");
   const [bannerMovie, setBannerMovie] = useState(null);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   const heroScrollLayerRef = useRef(null);
 
@@ -71,25 +75,10 @@ function Profile() {
   }, [username]);
 
   useEffect(() => {
-    if (!isAuthenticated || !currentUser || isOwnProfile) {
-      setIsFriend(false);
-      return;
+    if (profile) {
+      setRelationshipStatus(profile.relationshipStatus || "NONE");
     }
-    let cancelled = false;
-    async function checkFriend() {
-      try {
-        const data = await friendsApi.getFriends();
-        if (cancelled) return;
-        setIsFriend(data.friends.some((f) => f.username === username));
-      } catch {
-        // ignore
-      }
-    }
-    checkFriend();
-    return () => {
-      cancelled = true;
-    };
-  }, [isAuthenticated, currentUser, username, isOwnProfile]);
+  }, [profile]);
 
   // Makes the backdrop scroll slightly slower than the rest of the page.
   // Updates a ref directly (no setState) so scrolling never re-renders React.
@@ -115,9 +104,58 @@ function Profile() {
     setFriendLoading(true);
     try {
       await friendsApi.sendRequest(username);
-      setIsFriend(true);
+      setRelationshipStatus("OUTGOING_REQUEST");
     } catch (err) {
       console.error("Friend request failed:", err);
+    } finally {
+      setFriendLoading(false);
+    }
+  };
+
+  const handleAcceptRequest = async () => {
+    setFriendLoading(true);
+    try {
+      await friendsApi.acceptRequest(username);
+      setRelationshipStatus("FRIEND");
+    } catch (err) {
+      console.error("Accept failed:", err);
+    } finally {
+      setFriendLoading(false);
+    }
+  };
+
+  const handleRejectRequest = async () => {
+    setFriendLoading(true);
+    try {
+      await friendsApi.rejectRequest(username);
+      setRelationshipStatus("NONE");
+    } catch (err) {
+      console.error("Reject failed:", err);
+    } finally {
+      setFriendLoading(false);
+    }
+  };
+
+  const handleCancelRequest = async () => {
+    setFriendLoading(true);
+    try {
+      await friendsApi.cancelRequest(username);
+      setRelationshipStatus("NONE");
+    } catch (err) {
+      console.error("Cancel failed:", err);
+    } finally {
+      setFriendLoading(false);
+    }
+  };
+
+  const handleRemoveFriend = async () => {
+    setFriendLoading(true);
+    try {
+      await friendsApi.removeFriend(username);
+      setRelationshipStatus("NONE");
+      setShowRemoveConfirm(false);
+    } catch (err) {
+      console.error("Remove failed:", err);
     } finally {
       setFriendLoading(false);
     }
@@ -239,8 +277,45 @@ function Profile() {
           <div className="profile-header-aside">
             {isAuthenticated && !isOwnProfile && (
               <div className="profile-friend-action">
-                {isFriend ? (
-                  <span className="profile-friend-badge">✓ Friends</span>
+                {relationshipStatus === "FRIEND" ? (
+                  <div className="profile-friend-group">
+                    <span className="profile-friend-badge">✓ Friends</span>
+                    <button
+                      className="profile-friend-btn profile-friend-btn--danger"
+                      onClick={() => setShowRemoveConfirm(true)}
+                      disabled={friendLoading}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : relationshipStatus === "OUTGOING_REQUEST" ? (
+                  <div className="profile-friend-group">
+                    <span className="profile-friend-badge profile-friend-badge--pending">⏳ Pending</span>
+                    <button
+                      className="profile-friend-btn profile-friend-btn--danger"
+                      onClick={handleCancelRequest}
+                      disabled={friendLoading}
+                    >
+                      {friendLoading ? "..." : "Cancel"}
+                    </button>
+                  </div>
+                ) : relationshipStatus === "INCOMING_REQUEST" ? (
+                  <div className="profile-friend-group">
+                    <button
+                      className="profile-friend-btn"
+                      onClick={handleAcceptRequest}
+                      disabled={friendLoading}
+                    >
+                      {friendLoading ? "..." : "Accept"}
+                    </button>
+                    <button
+                      className="profile-friend-btn profile-friend-btn--danger"
+                      onClick={handleRejectRequest}
+                      disabled={friendLoading}
+                    >
+                      {friendLoading ? "..." : "Decline"}
+                    </button>
+                  </div>
                 ) : (
                   <button
                     className="profile-friend-btn"
@@ -343,6 +418,17 @@ function Profile() {
             />
           ))}
       </div>
+
+      <ConfirmModal
+        isOpen={showRemoveConfirm}
+        onClose={() => setShowRemoveConfirm(false)}
+        onConfirm={handleRemoveFriend}
+        title="Remove Friend"
+        message={`Are you sure you want to remove ${profile.displayName} from your friends? You can always send another friend request later.`}
+        confirmLabel="Remove Friend"
+        confirmDanger={true}
+        loading={friendLoading}
+      />
     </div>
   );
 }

@@ -49,3 +49,12 @@ export async function changePassword(req: Request, res: Response, next: NextFunc
     next(err);
   }
 }
+
+export async function getPasswordCooldown(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const cooldownInfo = await authService.getPasswordCooldownInfo(req.user!.userId);
+    res.json(cooldownInfo);
+  } catch (err) {
+    next(err);
+  }
+}

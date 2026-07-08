@@ -1,16 +1,22 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { friendsApi } from "../services/backendApi";
 import { useAuth } from "../contexts/AuthContext";
 import Avatar from "../components/Avatar";
+import FriendSearch from "../components/FriendSearch";
+import ConfirmModal from "../components/ConfirmModal";
 import "../css/Friends.css";
+import "../css/ConfirmModal.css";
 
 function Friends() {
-  const { isAuthenticated } = useAuth();
+  const { user: currentUser, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [friends, setFriends] = useState([]);
   const [requests, setRequests] = useState({ received: [], sent: [] });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("friends");
+  const [removeTarget, setRemoveTarget] = useState(null);
+  const [friendLoading, setFriendLoading] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -61,13 +67,27 @@ function Friends() {
     }
   };
 
+  const handleCancel = async (username) => {
+    try {
+      await friendsApi.cancelRequest(username);
+      const data = await friendsApi.getRequests();
+      setRequests(data);
+    } catch (err) {
+      console.error("Failed to cancel request:", err);
+    }
+  };
+
   const handleRemove = async (username) => {
+    setFriendLoading(true);
     try {
       await friendsApi.removeFriend(username);
       const data = await friendsApi.getFriends();
       setFriends(data.friends);
+      setRemoveTarget(null);
     } catch (err) {
-      console.error("Failed to remove friend:", err);
+      console.error("Failed to Remove Friend:", err);
+    } finally {
+      setFriendLoading(false);
     }
   };
 
@@ -103,15 +123,28 @@ function Friends() {
       </div>
 
       <div className="friends-tabs">
-        <button className={`friends-tab${activeTab === "friends" ? " friends-tab--active" : ""}`} onClick={() => setActiveTab("friends")}>
+        <button
+          className={`friends-tab${activeTab === "friends" ? " friends-tab--active" : ""}`}
+          onClick={() => setActiveTab("friends")}
+        >
           Friends ({friends.length})
         </button>
-        <button className={`friends-tab${activeTab === "requests" ? " friends-tab--active" : ""}`} onClick={() => setActiveTab("requests")}>
+        <button
+          className={`friends-tab${activeTab === "requests" ? " friends-tab--active" : ""}`}
+          onClick={() => setActiveTab("requests")}
+        >
           Requests ({requests.received.length})
+        </button>
+        <button
+          className={`friends-tab${activeTab === "find" ? " friends-tab--active" : ""}`}
+          onClick={() => setActiveTab("find")}
+        >
+          Find Friends
         </button>
       </div>
 
       <div className="friends-content">
+        {/* Friends Tab */}
         {activeTab === "friends" && (
           loading ? (
             <div className="search-users-loading">
@@ -124,19 +157,31 @@ function Friends() {
           ) : (
             <div className="users-list">
               {friends.map((friend) => (
-                <div key={friend.id} className="user-card">
-                  <Link to={`/profile/${friend.username}`} className="user-card-link">
-                    <div className="user-card-avatar">
-                      <Avatar id={friend.avatar} size={48} />
-                    </div>
-                    <div className="user-card-info">
-                      <h3 className="user-card-name">{friend.displayName}</h3>
-                      <p className="user-card-username">@{friend.username}</p>
-                    </div>
-                  </Link>
-                  <div className="user-card-action">
-                    <button className="friends-remove-btn" onClick={() => handleRemove(friend.username)}>
-                      Remove
+                <div key={friend.id} className="friend-card">
+                  <div className="friend-card-main">
+                    <Link to={`/profile/${friend.username}`} className="friend-card-link">
+                      <div className="friend-card-avatar">
+                        <Avatar id={friend.avatar} size={48} />
+                      </div>
+                      <div className="friend-card-info">
+                        <h3 className="friend-card-name">{friend.displayName}</h3>
+                        <p className="friend-card-username">@{friend.username}</p>
+                        <p className="friend-card-since">Friend</p>
+                      </div>
+                    </Link>
+                  </div>
+                  <div className="friend-card-actions">
+                    <button
+                      className="friend-card-btn friend-card-btn--secondary"
+                      onClick={() => navigate(`/profile/${friend.username}`)}
+                    >
+                      Collection
+                    </button>
+                    <button
+                      className="friend-card-btn friend-card-btn--danger"
+                      onClick={() => setRemoveTarget(friend)}
+                    >
+                      Remove Friend
                     </button>
                   </div>
                 </div>
@@ -145,28 +190,37 @@ function Friends() {
           )
         )}
 
+        {/* Requests Tab */}
         {activeTab === "requests" && (
           <div className="friend-requests">
             {requests.received.length > 0 && (
               <div className="request-section">
-                <h3 className="request-section-title">Received Requests</h3>
+                <h3 className="request-section-title">Incoming Requests</h3>
                 {requests.received.map((req) => (
-                  <div key={req.requestId} className="user-card">
-                    <Link to={`/profile/${req.username}`} className="user-card-link">
-                      <div className="user-card-avatar">
-                        <Avatar id={req.avatar} size={48} />
-                      </div>
-                      <div className="user-card-info">
-                        <h3 className="user-card-name">{req.displayName}</h3>
-                        <p className="user-card-username">@{req.username}</p>
-                      </div>
-                    </Link>
-                    <div className="user-card-action">
-                      <button className="friends-accept-btn" onClick={() => handleAccept(req.username)}>
+                  <div key={req.requestId} className="friend-card">
+                    <div className="friend-card-main">
+                      <Link to={`/profile/${req.username}`} className="friend-card-link">
+                        <div className="friend-card-avatar">
+                          <Avatar id={req.avatar} size={48} />
+                        </div>
+                        <div className="friend-card-info">
+                          <h3 className="friend-card-name">{req.displayName}</h3>
+                          <p className="friend-card-username">@{req.username}</p>
+                        </div>
+                      </Link>
+                    </div>
+                    <div className="friend-card-actions">
+                      <button
+                        className="friend-card-btn friend-card-btn--primary"
+                        onClick={() => handleAccept(req.username)}
+                      >
                         Accept
                       </button>
-                      <button className="friends-reject-btn" onClick={() => handleReject(req.username)}>
-                        Reject
+                      <button
+                        className="friend-card-btn friend-card-btn--danger"
+                        onClick={() => handleReject(req.username)}
+                      >
+                        Decline
                       </button>
                     </div>
                   </div>
@@ -176,21 +230,31 @@ function Friends() {
 
             {requests.sent.length > 0 && (
               <div className="request-section">
-                <h3 className="request-section-title">Sent Requests</h3>
+                <h3 className="request-section-title">Outgoing Requests</h3>
                 {requests.sent.map((req) => (
-                  <div key={req.requestId} className="user-card">
-                    <Link to={`/profile/${req.username}`} className="user-card-link">
-                      <div className="user-card-avatar">
-                        <Avatar id={req.avatar} size={48} />
-                      </div>
-                      <div className="user-card-info">
-                        <h3 className="user-card-name">{req.displayName}</h3>
-                        <p className="user-card-username">@{req.username}</p>
-                        <p className="request-status">
-                          {req.status === "pending" ? "⏳ Pending" : req.status}
-                        </p>
-                      </div>
-                    </Link>
+                  <div key={req.requestId} className="friend-card">
+                    <div className="friend-card-main">
+                      <Link to={`/profile/${req.username}`} className="friend-card-link">
+                        <div className="friend-card-avatar">
+                          <Avatar id={req.avatar} size={48} />
+                        </div>
+                        <div className="friend-card-info">
+                          <h3 className="friend-card-name">{req.displayName}</h3>
+                          <p className="friend-card-username">@{req.username}</p>
+                          <p className="friend-card-status friend-card-status--pending">
+                            ⏳ Pending
+                          </p>
+                        </div>
+                      </Link>
+                    </div>
+                    <div className="friend-card-actions">
+                      <button
+                        className="friend-card-btn friend-card-btn--danger"
+                        onClick={() => handleCancel(req.username)}
+                      >
+                        Cancel Request
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -203,7 +267,23 @@ function Friends() {
             )}
           </div>
         )}
+
+        {/* Find Friends Tab */}
+        {activeTab === "find" && (
+          <FriendSearch />
+        )}
       </div>
+
+      <ConfirmModal
+        isOpen={!!removeTarget}
+        onClose={() => setRemoveTarget(null)}
+        onConfirm={() => handleRemove(removeTarget?.username)}
+        title="Remove Friend"
+        message={`Are you sure you want to remove ${removeTarget?.displayName} from your friends? You can always send another friend request later.`}
+        confirmLabel="Remove Friend"
+        confirmDanger={true}
+        loading={friendLoading}
+      />
     </div>
   );
 }

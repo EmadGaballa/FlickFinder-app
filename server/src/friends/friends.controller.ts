@@ -28,6 +28,15 @@ export async function rejectRequest(req: Request, res: Response, next: NextFunct
   }
 }
 
+export async function cancelRequest(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await friendsService.cancelFriendRequest(req.user!.userId, req.params.username as string);
+    res.json({ message: "Friend request cancelled" });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function removeFriend(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     await friendsService.removeFriend(req.user!.userId, req.params.username as string);

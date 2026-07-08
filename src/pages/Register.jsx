@@ -3,6 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "../services/backendApi";
 import AvatarPicker from "../components/AvatarPicker";
 import { getAvatarById } from "../data/avatars/index";
+import PasswordField from "../components/PasswordField";
+import PasswordRequirements from "../components/PasswordRequirements";
+import { isPasswordStrong } from "../utils/passwordValidation";
 import "../css/Auth.css";
 
 function Register() {
@@ -17,6 +20,7 @@ function Register() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
+  const [isFormValid, setIsFormValid] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,12 +33,21 @@ function Register() {
     setErrors((err) => ({ ...err, [name]: "" }));
   };
 
+  useEffect(() => {
+    const passwordValid = isPasswordStrong(form.password);
+    const passwordsMatch = form.password === form.confirmPassword && form.confirmPassword !== "";
+    const hasRequiredFields = form.username && form.displayName && form.email;
+    setIsFormValid(passwordValid && passwordsMatch && hasRequiredFields);
+  }, [form]);
+
   const validate = () => {
     const errs = {};
     if (!form.username || form.username.length < 3) errs.username = "Username must be at least 3 characters";
     if (!form.displayName) errs.displayName = "Display name is required";
     if (!form.email || !form.email.includes("@")) errs.email = "Valid email is required";
-    if (!form.password || form.password.length < 8) errs.password = "Password must be at least 8 characters";
+    if (!isPasswordStrong(form.password)) {
+      errs.password = "Password does not meet requirements";
+    }
     if (form.password !== form.confirmPassword) errs.confirmPassword = "Passwords do not match";
     return errs;
   };
@@ -121,30 +134,27 @@ function Register() {
 
           <div className="form-group">
             <label className="form-label">Password</label>
-            <input
-              type="password"
+            <PasswordField
               name="password"
               value={form.password}
               onChange={handleChange}
-              className={`form-input${errors.password ? " form-input--error" : ""}`}
-              placeholder="At least 8 characters"
+              placeholder="Create a strong password"
               autoComplete="new-password"
+              error={errors.password}
             />
-            {errors.password && <span className="form-error">{errors.password}</span>}
+            <PasswordRequirements password={form.password} />
           </div>
 
           <div className="form-group">
             <label className="form-label">Confirm Password</label>
-            <input
-              type="password"
+            <PasswordField
               name="confirmPassword"
               value={form.confirmPassword}
               onChange={handleChange}
-              className={`form-input${errors.confirmPassword ? " form-input--error" : ""}`}
               placeholder="Repeat your password"
               autoComplete="new-password"
+              error={errors.confirmPassword}
             />
-            {errors.confirmPassword && <span className="form-error">{errors.confirmPassword}</span>}
           </div>
 
           <div className="form-group">
@@ -157,7 +167,7 @@ function Register() {
             </div>
           </div>
 
-          <button type="submit" className="auth-submit" disabled={loading}>
+          <button type="submit" className="auth-submit" disabled={loading || !isFormValid}>
             {loading ? "Creating account..." : "Create Account"}
           </button>
 

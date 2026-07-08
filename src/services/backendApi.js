@@ -1,4 +1,5 @@
-const API_BASE = "http://localhost:3001/api";
+const API_BASE =
+  import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 async function request(endpoint, options = {}) {
   const config = {
@@ -35,6 +36,9 @@ export const authApi = {
 
   changePassword: (body) =>
     request("/auth/change-password", { method: "POST", body: JSON.stringify(body) }),
+
+  getPasswordCooldown: () =>
+    request("/auth/password-cooldown"),
 };
 
 // ── Users ───────────────────────────────────────────
@@ -110,6 +114,9 @@ export const friendsApi = {
 
   rejectRequest: (username) =>
     request(`/friends/reject/${username}`, { method: "POST" }),
+
+  cancelRequest: (username) =>
+    request(`/friends/request/${username}`, { method: "DELETE" }),
 
   removeFriend: (username) =>
     request(`/friends/remove/${username}`, { method: "DELETE" }),

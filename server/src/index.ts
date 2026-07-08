@@ -8,10 +8,14 @@ import routes from "./routes/index.js";
 const app = express();
 
 // Middleware
-app.use(cors({
-  origin: config.clientUrl,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: config.clientUrl,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 app.use(express.json());
 app.use(cookieParser());
 

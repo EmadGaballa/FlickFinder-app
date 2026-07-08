@@ -16,6 +16,7 @@ model User {
   avatar        String?  @default("1")
   createdAt     DateTime @default(now())
   displayNameUpdatedAt DateTime?
+  lastPasswordChangedAt DateTime?
 
   favorites  Favorite[]
   watchlists Watchlist[]
@@ -39,6 +40,10 @@ model Favorite {
   rating Rating?
 
   @@unique([userId, movieId])
+
+  @@index([userId])
+  @@index([movieId])
+
   @@map("favorites")
 }
 
@@ -51,6 +56,10 @@ model Watchlist {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, movieId])
+
+  @@index([userId])
+  @@index([movieId])
+
   @@map("watchlists")
 }
 
@@ -66,6 +75,10 @@ model Rating {
   favorite Favorite? @relation(fields: [userId, movieId], references: [userId, movieId])
 
   @@unique([userId, movieId])
+
+  @@index([userId])
+  @@index([movieId])
+
   @@map("ratings")
 }
 
@@ -80,18 +93,26 @@ model FriendRequest {
   receiver User @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
 
   @@unique([senderId, receiverId])
+
+  @@index([senderId])
+  @@index([receiverId])
+
   @@map("friend_requests")
 }
 
 model Friendship {
-  id       String @id @default(cuid())
-  userId   String
-  friendId String
+  id        String   @id @default(cuid())
+  userId    String
+  friendId  String
   createdAt DateTime @default(now())
 
   user   User @relation("UserFriendships", fields: [userId], references: [id], onDelete: Cascade)
   friend User @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
 
   @@unique([userId, friendId])
+
+  @@index([userId])
+  @@index([friendId])
+
   @@map("friendships")
 }

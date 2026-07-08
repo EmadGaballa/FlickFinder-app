@@ -10,6 +10,7 @@ export interface UserProfile {
   displayName: string;
   avatar: string | null;
   createdAt: Date;
+  relationshipStatus?: "SELF" | "FRIEND" | "OUTGOING_REQUEST" | "INCOMING_REQUEST" | "NONE";
   stats: {
     totalFavorites: number;
     totalWatchlist: number;
@@ -36,13 +37,11 @@ export interface UserPublic {
   displayName: string;
   avatar: string | null;
   createdAt: Date;
-  _count: {
-    favorites: number;
-    friendships: number;
-  };
+  friendCount: number;
+  relationshipStatus: "SELF" | "FRIEND" | "OUTGOING_REQUEST" | "INCOMING_REQUEST" | "NONE";
 }
 
-export async function getProfile(username: string): Promise<UserProfile> {
+export async function getProfile(username: string, currentUserId?: string): Promise<UserProfile> {
   const user = await prisma.user.findUnique({
     where: { username },
     select: {
@@ -64,6 +63,30 @@ export async function getProfile(username: string): Promise<UserProfile> {
 
   if (!user) {
     throw new AppError(404, "User not found");
+  }
+
+  // Determine relationship status
+  let relationshipStatus: UserProfile["relationshipStatus"] = "NONE";
+  if (currentUserId) {
+    if (user.id === currentUserId) {
+      relationshipStatus = "SELF";
+    } else {
+      const [isFriend, outgoingReq, incomingReq] = await Promise.all([
+        prisma.friendship.findUnique({
+          where: { userId_friendId: { userId: currentUserId, friendId: user.id } },
+        }),
+        prisma.friendRequest.findUnique({
+          where: { senderId_receiverId: { senderId: currentUserId, receiverId: user.id } },
+        }),
+        prisma.friendRequest.findUnique({
+          where: { senderId_receiverId: { senderId: user.id, receiverId: currentUserId } },
+        }),
+      ]);
+
+      if (isFriend) relationshipStatus = "FRIEND";
+      else if (outgoingReq?.status === "pending") relationshipStatus = "OUTGOING_REQUEST";
+      else if (incomingReq?.status === "pending") relationshipStatus = "INCOMING_REQUEST";
+    }
   }
 
   const ratings = await prisma.rating.findMany({
@@ -96,7 +119,7 @@ export async function getProfile(username: string): Promise<UserProfile> {
     const topRatedIds = ratings
       .filter((r) => r.score === maxScore)
       .map((r) => r.movieId)
-      .slice(0, 20); // safety cap so a user with many tied top ratings doesn't trigger too many TMDB calls
+      .slice(0, 20);
 
     const movies = await getMoviesDetails(topRatedIds);
     const sorted = movies
@@ -125,6 +148,7 @@ export async function getProfile(username: string): Promise<UserProfile> {
     displayName: user.displayName,
     avatar: user.avatar,
     createdAt: user.createdAt,
+    relationshipStatus,
     stats: {
       totalFavorites: user._count.favorites,
       totalWatchlist: user._count.watchlists,
@@ -191,7 +215,7 @@ export async function updateProfile(
   return updated;
 }
 
-export async function searchUsers(query: string): Promise<UserPublic[]> {
+export async function searchUsers(query: string, currentUserId?: string): Promise<UserPublic[]> {
   const users = await prisma.user.findMany({
     where: {
       OR: [
@@ -205,10 +229,49 @@ export async function searchUsers(query: string): Promise<UserPublic[]> {
       displayName: true,
       avatar: true,
       createdAt: true,
-      _count: { select: { favorites: true, friendships: true } },
+      _count: { select: { friendships: true } },
     },
     take: 20,
   });
 
-  return users;
+  // Determine relationship status for each user
+  const results: UserPublic[] = await Promise.all(
+    users.map(async (u) => {
+      let relationshipStatus: UserPublic["relationshipStatus"] = "NONE";
+
+      if (currentUserId) {
+        if (u.id === currentUserId) {
+          relationshipStatus = "SELF";
+        } else {
+          const [isFriend, outgoingReq, incomingReq] = await Promise.all([
+            prisma.friendship.findUnique({
+              where: { userId_friendId: { userId: currentUserId, friendId: u.id } },
+            }),
+            prisma.friendRequest.findUnique({
+              where: { senderId_receiverId: { senderId: currentUserId, receiverId: u.id } },
+            }),
+            prisma.friendRequest.findUnique({
+              where: { senderId_receiverId: { senderId: u.id, receiverId: currentUserId } },
+            }),
+          ]);
+
+          if (isFriend) relationshipStatus = "FRIEND";
+          else if (outgoingReq?.status === "pending") relationshipStatus = "OUTGOING_REQUEST";
+          else if (incomingReq?.status === "pending") relationshipStatus = "INCOMING_REQUEST";
+        }
+      }
+
+      return {
+        id: u.id,
+        username: u.username,
+        displayName: u.displayName,
+        avatar: u.avatar,
+        createdAt: u.createdAt,
+        friendCount: u._count.friendships,
+        relationshipStatus,
+      };
+    })
+  );
+
+  return results;
 }

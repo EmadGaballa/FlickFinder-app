@@ -5,7 +5,7 @@
 }
 
 .settings-header {
-  padding: 5rem 2rem 2rem;
+  padding: 6.5rem 2rem 2rem;
   max-width: 800px;
   margin: 0 auto;
   text-align: center;
@@ -13,9 +13,9 @@
 
 .settings-title {
   font-family: var(--font-serif);
-  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-size: clamp(3rem, 4vw, 3.2rem);
   color: var(--text-primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.7rem;
 }
 
 .settings-subtitle {
@@ -165,6 +165,66 @@
   color: #e05c34;
 }
 
+/* ── Password Cooldown Notice ────────────────────── */
+.password-cooldown-notice {
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: rgba(245, 197, 24, 0.08);
+  border: 1px solid rgba(245, 197, 24, 0.25);
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.password-cooldown-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.password-cooldown-content {
+  flex: 1;
+}
+
+.password-cooldown-title {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  color: var(--gold);
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.password-cooldown-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem 0;
+  line-height: 1.5;
+}
+
+.password-cooldown-countdown {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin: 0;
+  font-weight: 500;
+}
+
+.password-cooldown-countdown strong {
+  color: var(--gold);
+  font-weight: 600;
+}
+
 .settings-message {
   padding: 0.85rem 1rem;
   border-radius: var(--radius);
@@ -278,9 +338,9 @@
 
 @media (max-width: 768px) {
   .settings-header {
-    padding: 4rem 1.25rem 1.5rem;
+    padding: 7rem 1.25rem 2rem;
   }
   .settings-content {
-    padding: 0 1.25rem;
+    padding: 0 3rem;
   }
 }

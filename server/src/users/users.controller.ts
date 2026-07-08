@@ -4,7 +4,8 @@ import { updateProfileSchema, searchUsersSchema } from "../utils/validate.js";
 
 export async function getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const user = await usersService.getProfile(req.params.username as string);
+    const currentUserId = req.user?.userId;
+    const user = await usersService.getProfile(req.params.username as string, currentUserId);
     res.json({ user });
   } catch (err) {
     next(err);
@@ -24,7 +25,8 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
 export async function searchUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { query } = searchUsersSchema.parse(req.query);
-    const users = await usersService.searchUsers(query);
+    const currentUserId = req.user?.userId;
+    const users = await usersService.searchUsers(query, currentUserId);
     res.json({ users });
   } catch (err) {
     next(err);

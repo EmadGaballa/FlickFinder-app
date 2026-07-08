@@ -1,0 +1,246 @@
+/* ==========================================================
+   FRIEND SEARCH - Premium User Discovery
+   ========================================================== */
+
+.friend-search {
+  width: 100%;
+}
+
+/* ── Search Field ─────────────────────────────────── */
+.friend-search-field {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.friend-search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.friend-search-input {
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 2.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.friend-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.friend-search-input:focus {
+  border-color: rgba(245, 197, 24, 0.4);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.friend-search-clear {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.friend-search-clear:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+}
+
+.friend-search-clear svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Loading ──────────────────────────────────────── */
+.friend-search-loading {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+/* ── Empty State ──────────────────────────────────── */
+.friend-search-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.friend-search-empty span {
+  display: block;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Results ──────────────────────────────────────── */
+.friend-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ── User Search Card ─────────────────────────────── */
+.user-search-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.user-search-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.user-search-card-main {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.user-search-card-avatar {
+  flex-shrink: 0;
+}
+
+.user-search-card-info {
+  min-width: 0;
+}
+
+.user-search-card-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.user-search-card-username {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.1rem 0 0;
+}
+
+.user-search-card-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0.2rem 0 0;
+  opacity: 0.7;
+}
+
+.user-search-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.user-search-card-btn {
+  padding: 0.45rem 0.9rem;
+  border-radius: 20px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.user-search-card-btn--primary {
+  background: rgba(245, 197, 24, 0.12);
+  border-color: rgba(245, 197, 24, 0.3);
+  color: var(--gold);
+}
+
+.user-search-card-btn--primary:hover {
+  background: rgba(245, 197, 24, 0.2);
+  border-color: rgba(245, 197, 24, 0.5);
+}
+
+.user-search-card-btn--secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.user-search-card-btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.user-search-card-btn--danger {
+  background: rgba(224, 92, 52, 0.1);
+  border-color: rgba(224, 92, 52, 0.25);
+  color: #e05c34;
+}
+
+.user-search-card-btn--danger:hover {
+  background: rgba(224, 92, 52, 0.18);
+  border-color: rgba(224, 92, 52, 0.4);
+}
+
+.user-search-card-status {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  white-space: nowrap;
+}
+
+.user-search-card-status--friend {
+  color: #4caf50;
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.user-search-card-status--pending {
+  color: #ff9800;
+  background: rgba(255, 152, 0, 0.1);
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 640px) {
+  .user-search-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .user-search-card-actions {
+    width: 100%;
+    justify-content: flex-end;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+}

@@ -3,6 +3,7 @@ import { prisma } from "../prisma/client.js";
 import { signToken } from "../utils/jwt.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { config } from "../utils/config.js";
+import { isPasswordStrong } from "../utils/passwordValidation.js";
 
 export interface AuthResult {
   user: {
@@ -44,8 +45,21 @@ export async function register(data: {
       409,
       existingUser.email === data.email
         ? "Email already in use"
-        : "Username already taken"
+        : "Username already taken",
     );
+  }
+
+  // Validate password strength
+  if (!isPasswordStrong(data.password)) {
+    const errors = [
+      "Password must contain:",
+      "• at least 10 characters",
+      "• one uppercase letter",
+      "• one lowercase letter",
+      "• one number",
+      "• one special character",
+    ];
+    throw new AppError(400, errors.join("\n"));
   }
 
   const passwordHash = await bcrypt.hash(data.password, 12);
@@ -108,19 +122,23 @@ export async function login(data: {
 }
 
 export function getCookieOptions() {
+  const isProduction = config.nodeEnv === "production";
+
   return {
     httpOnly: true,
-    secure: config.nodeEnv === "production",
-    sameSite: "lax" as const,
+    secure: isProduction,
+    sameSite: isProduction ? ("none" as const) : ("lax" as const),
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 }
 
 export function getClearCookieOptions() {
+  const isProduction = config.nodeEnv === "production";
+
   return {
     httpOnly: true,
-    secure: config.nodeEnv === "production",
-    sameSite: "lax" as const,
+    secure: isProduction,
+    sameSite: isProduction ? ("none" as const) : ("lax" as const),
   };
 }
 
@@ -148,20 +166,93 @@ export async function getMe(userId: string): Promise<UserProfile> {
 export async function changePassword(
   userId: string,
   currentPassword: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<void> {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new AppError(404, "User not found");
+
+  // Check password cooldown (3 hours)
+  if (user.lastPasswordChangedAt) {
+    const cooldownPeriod = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+    const timeSinceLastChange =
+      Date.now() - new Date(user.lastPasswordChangedAt).getTime();
+
+    if (timeSinceLastChange < cooldownPeriod) {
+      const remainingTime = cooldownPeriod - timeSinceLastChange;
+      const hours = Math.floor(remainingTime / (1000 * 60 * 60));
+      const minutes = Math.floor(
+        (remainingTime % (1000 * 60 * 60)) / (1000 * 60),
+      );
+
+      let message = "You recently changed your password.\n\n";
+      if (hours > 0) {
+        message += `Please wait another ${hours} hour${hours > 1 ? "s" : ""} ${minutes} minute${minutes > 1 ? "s" : ""} before changing it again.`;
+      } else {
+        message += `Please wait another ${minutes} minute${minutes > 1 ? "s" : ""} before changing it again.`;
+      }
+
+      throw new AppError(429, message);
+    }
+  }
 
   const valid = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!valid) {
     throw new AppError(401, "Current password is incorrect");
   }
 
+  // Validate new password strength
+  if (!isPasswordStrong(newPassword)) {
+    const errors = [
+      "Password must contain:",
+      "• at least 10 characters",
+      "• one uppercase letter",
+      "• one lowercase letter",
+      "• one number",
+      "• one special character",
+    ];
+    throw new AppError(400, errors.join("\n"));
+  }
+
   const passwordHash = await bcrypt.hash(newPassword, 12);
 
   await prisma.user.update({
     where: { id: userId },
-    data: { passwordHash },
+    data: {
+      passwordHash,
+      lastPasswordChangedAt: new Date(),
+    },
   });
+}
+
+export async function getPasswordCooldownInfo(
+  userId: string,
+): Promise<{ canChange: boolean; nextAllowedAt?: Date }> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { lastPasswordChangedAt: true },
+  });
+
+  if (!user) {
+    throw new AppError(404, "User not found");
+  }
+
+  if (!user.lastPasswordChangedAt) {
+    return { canChange: true };
+  }
+
+  const cooldownPeriod = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+  const timeSinceLastChange =
+    Date.now() - new Date(user.lastPasswordChangedAt).getTime();
+
+  if (timeSinceLastChange >= cooldownPeriod) {
+    return { canChange: true };
+  }
+
+  const nextAllowedAt = new Date(
+    new Date(user.lastPasswordChangedAt).getTime() + cooldownPeriod,
+  );
+  return {
+    canChange: false,
+    nextAllowedAt,
+  };
 }

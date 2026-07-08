@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { authApi } from "../services/backendApi";
+import PasswordField from "../components/PasswordField";
 import "../css/Auth.css";
 
 function Login() {
@@ -77,16 +78,14 @@ function Login() {
 
           <div className="form-group">
             <label className="form-label">Password</label>
-            <input
-              type="password"
+            <PasswordField
               name="password"
               value={form.password}
               onChange={handleChange}
-              className={`form-input${errors.password ? " form-input--error" : ""}`}
               placeholder="Enter your password"
               autoComplete="current-password"
+              error={errors.password}
             />
-            {errors.password && <span className="form-error">{errors.password}</span>}
           </div>
 
           <button type="submit" className="auth-submit" disabled={loading}>

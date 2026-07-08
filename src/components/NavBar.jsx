@@ -121,7 +121,6 @@ function NavBar() {
               </button>
               {profileOpen && (
                 <div className="nav-profile-dropdown">
-        
                   <Link
                     to="/friends"
                     className="nav-dropdown-item"
@@ -129,7 +128,6 @@ function NavBar() {
                   >
                     <span>👥</span> Friends
                   </Link>
-
                   <Link
                     to="/settings"
                     className="nav-dropdown-item"
@@ -176,7 +174,7 @@ function NavBar() {
         {user && (
           <>
             <Link
-              to={`/profile/${user.username}?tab=favorites`}
+              to={`/profile/${user.username}`}
               className={`drawer-link${
                 location.pathname === `/profile/${user.username}`
                   ? " drawer-link--active"
@@ -190,12 +188,6 @@ function NavBar() {
               className={`drawer-link${isActive("/friends") ? " drawer-link--active" : ""}`}
             >
               Friends
-            </Link>
-            <Link
-              to={`/profile/${user.username}`}
-              className={`drawer-link${location.pathname === `/profile/${user.username}` ? " drawer-link--active" : ""}`}
-            >
-              Profile
             </Link>
             <Link
               to="/settings"
