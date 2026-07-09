@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { authApi } from "../services/backendApi";
+import { useUserMovies } from "./UserMoviesContext";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { loadUserMovies, clearUserMovies } = useUserMovies();
 
   useEffect(() => {
     let cancelled = false;
@@ -13,6 +15,7 @@ export function AuthProvider({ children }) {
       try {
         const data = await authApi.me();
         if (!cancelled) setUser(data.user);
+        await loadUserMovies();
       } catch {
         if (!cancelled) setUser(null);
       } finally {
@@ -41,6 +44,8 @@ export function AuthProvider({ children }) {
 
     setUser(me.user);
 
+    await loadUserMovies();
+
     return me;
   };
 
@@ -51,6 +56,8 @@ export function AuthProvider({ children }) {
 
     setUser(me.user);
 
+    await loadUserMovies();
+
     return me;
   };
 
@@ -58,6 +65,7 @@ export function AuthProvider({ children }) {
     try {
       await authApi.logout();
     } finally {
+      clearUserMovies();
       setUser(null);
     }
   };

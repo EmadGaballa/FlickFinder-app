@@ -1,4 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  lazy,
+  Suspense,
+} from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   motion,
@@ -7,126 +15,214 @@ import {
   useMotionValue,
   useSpring,
 } from "framer-motion";
-import { favoritesApi, watchlistApi, ratingsApi } from "../services/backendApi";
 import { useAuth } from "../contexts/AuthContext";
+import { useUserMovies } from "../contexts/UserMoviesContext";
 import { getMovieDetails } from "../services/api";
-import RatingModal from "../components/RatingModal";
 import Avatar from "../components/Avatar";
 import "../css/MovieDetail.css";
+
+/* ── Lazy load RatingModal (only loaded when user opens it) ─── */
+const RatingModal = lazy(() => import("../components/RatingModal"));
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/";
 const EASE = [0.16, 1, 0.3, 1];
 
 /* ── Icons ─────────────────────────────────────────── */
-function ChevronLeftIcon() {
+const ChevronLeftIcon = React.memo(function ChevronLeftIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M15 18l-6-6 6-6" />
     </svg>
   );
-}
-function ChevronRightIcon() {
+});
+const ChevronRightIcon = React.memo(function ChevronRightIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M9 18l6-6-6-6" />
     </svg>
   );
-}
-function CloseIcon() {
+});
+const CloseIcon = React.memo(function CloseIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
       <path d="M18 6L6 18M6 6l12 12" />
     </svg>
   );
-}
-function HeartIcon({ filled }) {
+});
+const HeartIcon = React.memo(function HeartIcon({ filled }) {
   return (
-    <svg viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8">
+    <svg
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
       <path d="M12 21s-7.5-4.6-10-9.3C0.3 8 2 4.5 5.6 4c2-.3 3.7.6 4.9 2.2C11.7 4.6 13.4 3.7 15.4 4c3.6.5 5.3 4 3.6 7.7C19.5 16.4 12 21 12 21z" />
     </svg>
   );
-}
-function BookmarkIcon({ filled }) {
+});
+const BookmarkIcon = React.memo(function BookmarkIcon({ filled }) {
   return (
-    <svg viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8">
+    <svg
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
       <path d="M6 3h12v18l-6-4.2L6 21V3z" />
     </svg>
   );
-}
-function StarIcon({ filled }) {
+});
+const StarIcon = React.memo(function StarIcon({ filled }) {
   return (
-    <svg viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.6">
+    <svg
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.6"
+    >
       <path d="M12 2.5l2.9 6.3 6.9.7-5.2 4.7 1.5 6.8L12 17.7 5.9 21l1.5-6.8-5.2-4.7 6.9-.7L12 2.5z" />
     </svg>
   );
-}
-function PlayIcon() {
+});
+const PlayIcon = React.memo(function PlayIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor">
       <path d="M8 5v14l11-7z" />
     </svg>
   );
-}
-function CalendarIcon() {
+});
+const CalendarIcon = React.memo(function CalendarIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
     </svg>
   );
-}
-function ClockIcon() {
+});
+const ClockIcon = React.memo(function ClockIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 3" />
     </svg>
   );
-}
-function GlobeIcon() {
+});
+const GlobeIcon = React.memo(function GlobeIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a13 13 0 0 1 0 18a13 13 0 0 1 0-18z" />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3a13 13 0 0 1 0 18a13 13 0 0 1 0-18z" />
     </svg>
   );
-}
-function FilmIcon() {
+});
+const FilmIcon = React.memo(function FilmIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <rect x="2" y="2" width="20" height="20" rx="2" /><path d="M7 2v20M17 2v20M2 12h20" />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="2" />
+      <path d="M7 2v20M17 2v20M2 12h20" />
     </svg>
   );
-}
-function UsersIcon() {
+});
+const UsersIcon = React.memo(function UsersIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    >
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
   );
-}
-function DollarIcon() {
+});
+const DollarIcon = React.memo(function DollarIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    >
       <path d="M12 2v20M17 6.5c0-1.9-2.2-3.5-5-3.5s-5 1.5-5 3.5 2.2 3 5 3.5c2.8.5 5 1.6 5 3.5s-2.2 3.5-5 3.5-5-1.6-5-3.5" />
     </svg>
   );
-}
-function TicketIcon() {
+});
+const TicketIcon = React.memo(function TicketIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    >
       <path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8z" />
       <path d="M10 6v12" strokeDasharray="2 3" />
     </svg>
   );
-}
+});
 
 /* ── Score Ring ────────────────────────────────────── */
-function ScoreRing({ score, color, size = 68, stroke = 3 }) {
+const ScoreRing = React.memo(function ScoreRing({
+  score,
+  color,
+  size = 68,
+  stroke = 3,
+}) {
   const pct = Math.max(0, Math.min(100, Math.round((score || 0) * 10)));
   const r = (size - stroke * 2) / 2;
   const c = 2 * Math.PI * r;
   const offset = c - (pct / 100) * c;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="md-score-ring">
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      className="md-score-ring"
+    >
       <defs>
         <filter id="md-ring-glow" x="-60%" y="-60%" width="220%" height="220%">
           <feGaussianBlur stdDeviation={size * 0.045} result="blur" />
@@ -136,7 +232,14 @@ function ScoreRing({ score, color, size = 68, stroke = 3 }) {
           </feMerge>
         </filter>
       </defs>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="rgba(8,8,11,0.92)" stroke="rgba(255,255,255,0.1)" strokeWidth={stroke} />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="rgba(8,8,11,0.92)"
+        stroke="rgba(255,255,255,0.1)"
+        strokeWidth={stroke}
+      />
       <motion.circle
         cx={size / 2}
         cy={size / 2}
@@ -153,15 +256,30 @@ function ScoreRing({ score, color, size = 68, stroke = 3 }) {
         transition={{ duration: 1.2, ease: EASE }}
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
       />
-      <text x="50%" y="52%" textAnchor="middle" dominantBaseline="middle" className="md-score-text" style={{ fontSize: size * 0.24 }}>
+      <text
+        x="50%"
+        y="52%"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className="md-score-text"
+        style={{ fontSize: size * 0.24 }}
+      >
         {score ? score.toFixed(1) : "–"}
       </text>
     </svg>
   );
-}
+});
 
 /* ── Glow toggle button (the "lightbulb" action) ──── */
-function GlowButton({ active, onClick, disabled, icon, label, tone = "gold", size = "md" }) {
+const GlowButton = React.memo(function GlowButton({
+  active,
+  onClick,
+  disabled,
+  icon,
+  label,
+  tone = "gold",
+  size = "md",
+}) {
   return (
     <div className={`gb-wrap gb-wrap--${size}`}>
       <motion.button
@@ -187,10 +305,10 @@ function GlowButton({ active, onClick, disabled, icon, label, tone = "gold", siz
       {label && <span className="gb-label">{label}</span>}
     </div>
   );
-}
+});
 
 /* ── Section heading ───────────────────────────────── */
-function SectionHeading({ eyebrow, title }) {
+const SectionHeading = React.memo(function SectionHeading({ eyebrow, title }) {
   return (
     <div className="sec-head">
       {eyebrow && <span className="sec-eyebrow">{eyebrow}</span>}
@@ -198,67 +316,93 @@ function SectionHeading({ eyebrow, title }) {
       <span className="sec-rule" />
     </div>
   );
-}
-
-/* ── Horizontal rail with peek arrows ─────────────── */
-function Rail({ children }) {
-  const trackRef = useRef(null);
-  const scrollBy = (dir) => {
-    const el = trackRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * el.clientWidth * 0.82, behavior: "smooth" });
-  };
-  return (
-    <div className="md-rail-wrap">
-      <button className="md-rail-arrow md-rail-arrow--left" onClick={() => scrollBy(-1)} aria-label="Scroll left" type="button">
-        <ChevronLeftIcon />
-      </button>
-      <div className="md-rail-track" ref={trackRef}>
-        {children}
-      </div>
-      <button className="md-rail-arrow md-rail-arrow--right" onClick={() => scrollBy(1)} aria-label="Scroll right" type="button">
-        <ChevronRightIcon />
-      </button>
-    </div>
-  );
-}
+});
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 40 },
   visible: { opacity: 1, y: 0 },
 };
 
-function Section({ children, className = "" }) {
+const Section = React.memo(function Section({ children, className = "" }) {
   return (
     <motion.section
       className={`md-section ${className}`}
       variants={sectionVariants}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: "-80px" }}
+      viewport={{ once: true, amount: 0.15 }}
       transition={{ duration: 0.7, ease: EASE }}
     >
       {children}
     </motion.section>
   );
-}
+});
+
+const Rail = React.memo(function Rail({ children }) {
+  const ref = useRef(null);
+
+  const scroll = (direction) => {
+    ref.current?.scrollBy({
+      left: direction * 420,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <div className="md-rail-wrap">
+      <button
+        className="md-rail-arrow md-rail-arrow--left"
+        onClick={() => scroll(-1)}
+        type="button"
+        aria-label="Scroll left"
+      >
+        <ChevronLeftIcon />
+      </button>
+
+      <div className="md-rail" ref={ref}>
+        {children}
+      </div>
+
+      <button
+        className="md-rail-arrow md-rail-arrow--right"
+        onClick={() => scroll(1)}
+        type="button"
+        aria-label="Scroll right"
+      >
+        <ChevronRightIcon />
+      </button>
+    </div>
+  );
+});
 
 function MovieDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const {
+    favoriteIds,
+    watchlistIds,
+    ratings,
+    addFavorite,
+    removeFavorite,
+    addWatchlist,
+    removeWatchlist,
+    rateMovie,
+    removeRating,
+  } = useUserMovies();
   const reducedMotion = useReducedMotion();
 
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isFav, setIsFav] = useState(false);
-  const [isWatchlist, setIsWatchlist] = useState(false);
-  const [userRating, setUserRating] = useState(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [showCondensed, setShowCondensed] = useState(false);
   const [trailerPlaying, setTrailerPlaying] = useState(false);
+
+  const isFav = movie ? favoriteIds.has(movie.id) : false;
+  const isWatchlist = movie ? watchlistIds.has(movie.id) : false;
+  const userRating = movie ? ratings[movie.id] : null;
 
   const sentinelRef = useRef(null);
   const posterRef = useRef(null);
@@ -269,20 +413,24 @@ function MovieDetail() {
   const rXs = useSpring(rX, { stiffness: 150, damping: 18 });
   const rYs = useSpring(rY, { stiffness: 150, damping: 18 });
 
-  const handlePosterMove = (e) => {
-    if (reducedMotion) return;
-    const el = posterRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width - 0.5;
-    const py = (e.clientY - rect.top) / rect.height - 0.5;
-    rY.set(px * 16);
-    rX.set(py * -16);
-  };
-  const handlePosterLeave = () => {
+  const handlePosterMove = useCallback(
+    (e) => {
+      if (reducedMotion) return;
+      const el = posterRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width - 0.5;
+      const py = (e.clientY - rect.top) / rect.height - 0.5;
+      rY.set(px * 16);
+      rX.set(py * -16);
+    },
+    [reducedMotion],
+  );
+
+  const handlePosterLeave = useCallback(() => {
     rX.set(0);
     rY.set(0);
-  };
+  }, [rX, rY]);
 
   useEffect(() => {
     let cancelled = false;
@@ -294,7 +442,8 @@ function MovieDetail() {
         if (!cancelled) setMovie(data);
       } catch (err) {
         console.error("Failed to load movie:", err);
-        if (!cancelled) setError("Failed to load movie details. Please try again.");
+        if (!cancelled)
+          setError("Failed to load movie details. Please try again.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -302,95 +451,175 @@ function MovieDetail() {
     load();
     window.scrollTo(0, 0);
     setTrailerPlaying(false);
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
-
-  useEffect(() => {
-    if (!isAuthenticated || !movie?.id) return;
-    let cancelled = false;
-    async function load() {
-      try {
-        const [favData, watchData, ratingData] = await Promise.all([
-          favoritesApi.getMyFavoriteIds(),
-          watchlistApi.getMyWatchlistIds(),
-          ratingsApi.getMyRatings(),
-        ]);
-        if (cancelled) return;
-        setIsFav(favData.ids.includes(movie.id));
-        setIsWatchlist(watchData.ids.includes(movie.id));
-        setUserRating(ratingData.ratings[movie.id] || null);
-      } catch {
-        // ignore
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [isAuthenticated, movie?.id]);
 
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
-    const obs = new IntersectionObserver(([entry]) => setShowCondensed(!entry.isIntersecting), { threshold: 0 });
+    const obs = new IntersectionObserver(
+      ([entry]) => setShowCondensed(!entry.isIntersecting),
+      { threshold: 0 },
+    );
     obs.observe(el);
     return () => obs.disconnect();
   }, [movie]);
 
-  const handleFavorite = async () => {
+  /* ── Memoize all derived movie data ──────────────── */
+  const movieData = useMemo(() => {
+    if (!movie) return null;
+    const posterUrl = movie.poster_path
+      ? `${TMDB_IMG}w500${movie.poster_path}`
+      : null;
+    const backdropUrl = movie.backdrop_path
+      ? `${TMDB_IMG}w1280${movie.backdrop_path}`
+      : null;
+    const year = movie.release_date
+      ? movie.release_date.split("-")[0]
+      : "Unknown";
+    const ratingColor =
+      movie.vote_average >= 8
+        ? "#f0b429"
+        : movie.vote_average >= 6.5
+          ? "#ef8354"
+          : "#ff5d5d";
+    const director = movie.crew?.find((person) => person.job === "Director");
+    const budget = movie.budget || 0;
+    const revenue = movie.revenue || 0;
+    const profit = revenue && budget ? revenue - budget : null;
+    const multiplier = revenue && budget ? revenue / budget : null;
+    const trailerThumb = movie.trailer
+      ? `https://img.youtube.com/vi/${movie.trailer.key}/hqdefault.jpg`
+      : null;
+    return {
+      posterUrl,
+      backdropUrl,
+      year,
+      ratingColor,
+      director,
+      budget,
+      revenue,
+      profit,
+      multiplier,
+      trailerThumb,
+    };
+  }, [movie]);
+
+  /* ── Memoize currency formatter (avoid recreating Intl.NumberFormat) ── */
+  const currencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        notation: "compact",
+        maximumFractionDigits: 1,
+      }),
+    [],
+  );
+
+  /* Memoized formatCurrency using the pre-created formatter */
+  const formatCurrency = useCallback(
+    (amount) => {
+      if (!amount) return null;
+      return currencyFormatter.format(amount);
+    },
+    [currencyFormatter],
+  );
+
+  /* ── Memoize formatRuntime (never recreate) ──────── */
+  const formatRuntime = useCallback((minutes) => {
+    if (!minutes) return null;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  }, []);
+
+  /* Precompute formatted runtime once */
+  const runtime = useMemo(
+    () => formatRuntime(movie?.runtime),
+    [movie?.runtime, formatRuntime],
+  );
+
+  /* Precompute formatted currency values once */
+  const formattedBudget = useMemo(() => {
+    if (!movieData) return null;
+    return formatCurrency(movieData.budget);
+  }, [movieData, formatCurrency]);
+
+  const formattedRevenue = useMemo(() => {
+    if (!movieData) return null;
+    return formatCurrency(movieData.revenue);
+  }, [movieData, formatCurrency]);
+
+  const formattedProfit = useMemo(() => {
+    if (movieData?.profit == null) return null;
+    return formatCurrency(Math.abs(movieData.profit));
+  }, [movieData, formatCurrency]);
+
+  /* ── Memoize event handlers ──────────────────────── */
+  const handleFavorite = useCallback(async () => {
     if (!isAuthenticated || !movie) return;
+
     setActionLoading(true);
+
     try {
       if (isFav) {
-        await favoritesApi.removeFavorite(movie.id);
-        setIsFav(false);
-        setUserRating(null);
+        await removeFavorite(movie.id);
       } else {
-        await favoritesApi.addFavorite(movie.id);
-        setIsFav(true);
+        await addFavorite(movie.id);
         setShowRatingModal(true);
       }
     } catch (err) {
-      console.error("Favorite action failed:", err);
+      console.error(err);
+    } finally {
+      setActionLoading(false);
     }
-    setActionLoading(false);
-  };
+  }, [isAuthenticated, movie, isFav, removeFavorite, addFavorite]);
 
-  const handleWatchlist = async () => {
+  const handleWatchlist = useCallback(async () => {
     if (!isAuthenticated || !movie) return;
+
     setActionLoading(true);
+
     try {
       if (isWatchlist) {
-        await watchlistApi.removeFromWatchlist(movie.id);
-        setIsWatchlist(false);
+        await removeWatchlist(movie.id);
       } else {
-        await watchlistApi.addToWatchlist(movie.id);
-        setIsWatchlist(true);
+        await addWatchlist(movie.id);
       }
     } catch (err) {
-      console.error("Watchlist action failed:", err);
+      console.error(err);
+    } finally {
+      setActionLoading(false);
     }
-    setActionLoading(false);
-  };
+  }, [isAuthenticated, movie, isWatchlist, removeWatchlist, addWatchlist]);
 
-  const handleRated = (score) => {
-    setUserRating(score);
-    setIsFav(true);
-  };
+  const handleRated = useCallback(
+    async (score) => {
+      await rateMovie(movie.id, score);
+    },
+    [movie, rateMovie],
+  );
 
-  const handleRatingRemoved = () => {
-    setUserRating(null);
-  };
+  const handleRatingRemoved = useCallback(async () => {
+    await removeRating(movie.id);
+  }, [movie, removeRating]);
 
-  const handleRemoveRatingDirect = async () => {
+  const handleRemoveRatingDirect = useCallback(async () => {
     if (!isAuthenticated || !movie) return;
+
     setActionLoading(true);
+
     try {
-      await ratingsApi.removeRating(movie.id);
-      setUserRating(null);
+      await removeRating(movie.id);
     } catch (err) {
-      console.error("Failed to remove rating:", err);
+      console.error(err);
+    } finally {
+      setActionLoading(false);
     }
-    setActionLoading(false);
-  };
+  }, [isAuthenticated, movie, removeRating]);
 
   if (loading) {
     return (
@@ -414,60 +643,49 @@ function MovieDetail() {
         <div className="movie-detail-error">
           <h2>Oops! Something went wrong</h2>
           <p>{error}</p>
-          <Link to="/" className="empty-cta">Go Home</Link>
+          <Link to="/" className="empty-cta">
+            Go Home
+          </Link>
         </div>
       </div>
     );
   }
 
-  if (!movie) {
+  if (!movie || !movieData) {
     return (
       <div className="movie-detail-page">
         <div className="movie-detail-error">
           <h2>Movie not found</h2>
-          <Link to="/" className="empty-cta">Go Home</Link>
+          <Link to="/" className="empty-cta">
+            Go Home
+          </Link>
         </div>
       </div>
     );
   }
 
-  const posterUrl = movie.poster_path ? `${TMDB_IMG}w500${movie.poster_path}` : null;
-  const backdropUrl = movie.backdrop_path ? `${TMDB_IMG}original${movie.backdrop_path}` : null;
-  const year = movie.release_date ? movie.release_date.split("-")[0] : "Unknown";
-  const ratingColor =
-    movie.vote_average >= 8 ? "#f0b429" : movie.vote_average >= 6.5 ? "#ef8354" : "#ff5d5d";
-  const director = movie.crew?.find((person) => person.job === "Director");
-
-  const formatCurrency = (amount) => {
-    if (!amount) return null;
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      notation: "compact",
-      maximumFractionDigits: 1,
-    }).format(amount);
-  };
-
-  const formatRuntime = (minutes) => {
-    if (!minutes) return null;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
-  };
-
-  const budget = movie.budget || 0;
-  const revenue = movie.revenue || 0;
-  const profit = revenue && budget ? revenue - budget : null;
-  const multiplier = revenue && budget ? revenue / budget : null;
-
-  const trailerThumb = movie.trailer
-    ? `https://img.youtube.com/vi/${movie.trailer.key}/maxresdefault.jpg`
-    : null;
+  /* ── Deconstruct memoized movie data ─────────────── */
+  const {
+    posterUrl,
+    backdropUrl,
+    year,
+    ratingColor,
+    director,
+    profit,
+    multiplier,
+    trailerThumb,
+  } = movieData;
 
   return (
-    <div className="movie-detail-page" style={{ "--accent-dynamic": ratingColor }}>
+    <div
+      className="movie-detail-page"
+      style={{ "--accent-dynamic": ratingColor }}
+    >
       <div className="md-grain" aria-hidden="true" />
-      <div className={`md-aurora ${reducedMotion ? "md-aurora--static" : ""}`} aria-hidden="true">
+      <div
+        className={`md-aurora ${reducedMotion ? "md-aurora--static" : ""}`}
+        aria-hidden="true"
+      >
         <span className="md-aurora-blob md-aurora-blob--gold" />
         <span className="md-aurora-blob md-aurora-blob--teal" />
         <span className="md-aurora-blob md-aurora-blob--ember" />
@@ -483,13 +701,32 @@ function MovieDetail() {
             exit={{ y: -64, opacity: 0 }}
             transition={{ duration: reducedMotion ? 0.01 : 0.35, ease: EASE }}
           >
-            <button className="md-condensed-back" onClick={() => navigate(-1)} aria-label="Go back" type="button">
+            <button
+              className="md-condensed-back"
+              onClick={() => navigate(-1)}
+              aria-label="Go back"
+              type="button"
+            >
               <ChevronLeftIcon />
             </button>
             <span className="md-condensed-title">{movie.title}</span>
             <div className="md-condensed-actions">
-              <GlowButton active={isFav} onClick={handleFavorite} disabled={actionLoading} icon={<HeartIcon filled={isFav} />} tone="ember" size="sm" />
-              <GlowButton active={isWatchlist} onClick={handleWatchlist} disabled={actionLoading} icon={<BookmarkIcon filled={isWatchlist} />} tone="teal" size="sm" />
+              <GlowButton
+                active={isFav}
+                onClick={handleFavorite}
+                disabled={actionLoading}
+                icon={<HeartIcon filled={isFav} />}
+                tone="ember"
+                size="sm"
+              />
+              <GlowButton
+                active={isWatchlist}
+                onClick={handleWatchlist}
+                disabled={actionLoading}
+                icon={<BookmarkIcon filled={isWatchlist} />}
+                tone="teal"
+                size="sm"
+              />
             </div>
           </motion.div>
         )}
@@ -509,7 +746,12 @@ function MovieDetail() {
         <div className="md-letterbox md-letterbox--top" />
         <div className="md-letterbox md-letterbox--bottom" />
 
-        <button className="md-back" onClick={() => navigate(-1)} aria-label="Go back" type="button">
+        <button
+          className="md-back"
+          onClick={() => navigate(-1)}
+          aria-label="Go back"
+          type="button"
+        >
           <ChevronLeftIcon />
           <span>Back</span>
         </button>
@@ -525,10 +767,27 @@ function MovieDetail() {
             transition={{ duration: reducedMotion ? 0.01 : 1, ease: EASE }}
             style={{ perspective: 900 }}
           >
-            <motion.div className="md-poster" style={{ rotateX: rXs, rotateY: rYs }}>
-              {posterUrl && <div className="md-poster-glow" style={{ backgroundImage: `url(${posterUrl})` }} />}
+            <motion.div
+              className="md-poster"
+              style={{
+                rotateX: rXs,
+                rotateY: rYs,
+                transformStyle: "preserve-3d",
+              }}
+            >
               {posterUrl ? (
-                <img src={posterUrl} alt={movie.title} />
+                <img
+                  src={`${TMDB_IMG}w342${movie.poster_path}`}
+                  srcSet={`
+        ${TMDB_IMG}w342${movie.poster_path} 342w,
+        ${TMDB_IMG}w500${movie.poster_path} 500w,
+        ${TMDB_IMG}w780${movie.poster_path} 780w
+    `}
+                  sizes="(max-width:768px) 70vw, 400px"
+                  alt={movie.title}
+                  decoding="async"
+                  fetchPriority="high"
+                />
               ) : (
                 <div className="movie-poster-fallback">
                   <FilmIcon />
@@ -537,7 +796,11 @@ function MovieDetail() {
               )}
               {movie.vote_average > 0 && (
                 <div className="md-score-badge">
-                  <ScoreRing score={movie.vote_average} color={ratingColor} />
+                  <ScoreRing
+                    score={movie.vote_average}
+                    color={ratingColor}
+                    size={40}
+                  />
                 </div>
               )}
             </motion.div>
@@ -547,29 +810,59 @@ function MovieDetail() {
             className="md-info"
             initial={{ opacity: 0, y: 26 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reducedMotion ? 0.01 : 1, ease: EASE, delay: 0.1 }}
+            transition={{
+              duration: reducedMotion ? 0.01 : 1,
+              ease: EASE,
+              delay: 0.1,
+            }}
           >
             <p className="md-eyebrow">
-              {year}{director ? ` · Directed by ${director.name}` : ""}
+              {year}
+              {director ? ` · Directed by ${director.name}` : ""}
             </p>
             <h1 className="md-title">{movie.title}</h1>
-            {movie.tagline && <p className="md-tagline">&ldquo;{movie.tagline}&rdquo;</p>}
+            {movie.tagline && (
+              <p className="md-tagline">&ldquo;{movie.tagline}&rdquo;</p>
+            )}
 
             <div className="md-meta-row">
-              {formatRuntime(movie.runtime) ? (
-                <span className="md-meta-chip"><ClockIcon />{formatRuntime(movie.runtime)}</span>
+              {runtime ? (
+                <span className="md-meta-chip">
+                  <ClockIcon />
+                  {runtime}
+                </span>
               ) : null}
               {movie.vote_count ? (
-                <span className="md-meta-chip"><UsersIcon />{movie.vote_count.toLocaleString()} votes</span>
+                <span className="md-meta-chip">
+                  <UsersIcon />
+                  {movie.vote_count.toLocaleString()} votes
+                </span>
               ) : null}
               {movie.original_language ? (
-                <span className="md-meta-chip"><GlobeIcon />{movie.original_language.toUpperCase()}</span>
+                <span className="md-meta-chip">
+                  <GlobeIcon />
+                  {movie.original_language.toUpperCase()}
+                </span>
               ) : null}
             </div>
 
             <div className="md-actions">
-              <GlowButton active={isFav} onClick={handleFavorite} disabled={actionLoading} icon={<HeartIcon filled={isFav} />} label="Favorite" tone="ember" />
-              <GlowButton active={isWatchlist} onClick={handleWatchlist} disabled={actionLoading} icon={<BookmarkIcon filled={isWatchlist} />} label="Watchlist" tone="teal" />
+              <GlowButton
+                active={isFav}
+                onClick={handleFavorite}
+                disabled={actionLoading}
+                icon={<HeartIcon filled={isFav} />}
+                label="Favorite"
+                tone="ember"
+              />
+              <GlowButton
+                active={isWatchlist}
+                onClick={handleWatchlist}
+                disabled={actionLoading}
+                icon={<BookmarkIcon filled={isWatchlist} />}
+                label="Watchlist"
+                tone="teal"
+              />
               {userRating ? (
                 <div className="gb-wrap gb-wrap--md">
                   <motion.button
@@ -580,23 +873,47 @@ function MovieDetail() {
                     whileTap={{ scale: 0.92 }}
                     aria-label={`Your rating ${userRating.toFixed(1)}`}
                   >
-                    <motion.span className="gb-halo" animate={{ opacity: [0.4, 1, 0.6, 1] }} transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }} />
-                    <span className="gb-score-value">{userRating.toFixed(1)}</span>
+                    <motion.span
+                      className="gb-halo"
+                      animate={{ opacity: [0.4, 1, 0.6, 1] }}
+                      transition={{
+                        duration: 2.4,
+                        repeat: 5,
+                        ease: "easeInOut",
+                      }}
+                    />
+                    <span className="gb-score-value">
+                      {userRating.toFixed(1)}
+                    </span>
                   </motion.button>
-                  <button className="gb-remove" onClick={handleRemoveRatingDirect} disabled={actionLoading} aria-label="Clear your rating" type="button">
+                  <button
+                    className="gb-remove"
+                    onClick={handleRemoveRatingDirect}
+                    disabled={actionLoading}
+                    aria-label="Clear your rating"
+                    type="button"
+                  >
                     <CloseIcon />
                   </button>
                   <span className="gb-label">Your Rating</span>
                 </div>
               ) : isFav ? (
-                <GlowButton active={false} onClick={() => setShowRatingModal(true)} icon={<StarIcon />} label="Rate" tone="gold" />
+                <GlowButton
+                  active={false}
+                  onClick={() => setShowRatingModal(true)}
+                  icon={<StarIcon />}
+                  label="Rate"
+                  tone="gold"
+                />
               ) : null}
             </div>
           </motion.div>
         </div>
 
         <div ref={sentinelRef} className="md-hero-sentinel" />
-        <div className="md-scroll-cue" aria-hidden="true"><span /></div>
+        <div className="md-scroll-cue" aria-hidden="true">
+          <span />
+        </div>
       </section>
 
       {/* ── Overview ──────────────────────────────── */}
@@ -613,14 +930,18 @@ function MovieDetail() {
         <div className="md-info-grid">
           {movie.status && (
             <div className="md-fact">
-              <span className="md-fact-icon"><TicketIcon /></span>
+              <span className="md-fact-icon">
+                <TicketIcon />
+              </span>
               <span className="md-fact-label">Status</span>
               <span className="md-fact-value">{movie.status}</span>
             </div>
           )}
           {movie.release_date && (
             <div className="md-fact">
-              <span className="md-fact-icon"><CalendarIcon /></span>
+              <span className="md-fact-icon">
+                <CalendarIcon />
+              </span>
               <span className="md-fact-label">Release Date</span>
               <span className="md-fact-value">
                 {new Date(movie.release_date).toLocaleDateString("en-US", {
@@ -631,53 +952,74 @@ function MovieDetail() {
               </span>
             </div>
           )}
-          {formatRuntime(movie.runtime) && (
+          {runtime && (
             <div className="md-fact">
-              <span className="md-fact-icon"><ClockIcon /></span>
+              <span className="md-fact-icon">
+                <ClockIcon />
+              </span>
               <span className="md-fact-label">Runtime</span>
-              <span className="md-fact-value">{formatRuntime(movie.runtime)}</span>
+              <span className="md-fact-value">{runtime}</span>
             </div>
           )}
           {movie.original_language && (
             <div className="md-fact">
-              <span className="md-fact-icon"><GlobeIcon /></span>
+              <span className="md-fact-icon">
+                <GlobeIcon />
+              </span>
               <span className="md-fact-label">Language</span>
-              <span className="md-fact-value">{movie.original_language.toUpperCase()}</span>
+              <span className="md-fact-value">
+                {movie.original_language.toUpperCase()}
+              </span>
             </div>
           )}
           {movie.vote_average > 0 && (
             <div className="md-fact">
-              <span className="md-fact-icon"><StarIcon filled /></span>
+              <span className="md-fact-icon">
+                <StarIcon filled />
+              </span>
               <span className="md-fact-label">Audience Score</span>
-              <span className="md-fact-value">{movie.vote_average.toFixed(1)} / 10</span>
+              <span className="md-fact-value">
+                {movie.vote_average.toFixed(1)} / 10
+              </span>
             </div>
           )}
           {movie.vote_count > 0 && (
             <div className="md-fact">
-              <span className="md-fact-icon"><UsersIcon /></span>
+              <span className="md-fact-icon">
+                <UsersIcon />
+              </span>
               <span className="md-fact-label">Votes Cast</span>
-              <span className="md-fact-value">{movie.vote_count.toLocaleString()}</span>
+              <span className="md-fact-value">
+                {movie.vote_count.toLocaleString()}
+              </span>
             </div>
           )}
-          {budget > 0 && (
+          {movieData.budget > 0 && (
             <div className="md-fact">
-              <span className="md-fact-icon"><DollarIcon /></span>
+              <span className="md-fact-icon">
+                <DollarIcon />
+              </span>
               <span className="md-fact-label">Budget</span>
-              <span className="md-fact-value">{formatCurrency(budget)}</span>
+              <span className="md-fact-value">{formattedBudget}</span>
             </div>
           )}
-          {revenue > 0 && (
+          {movieData.revenue > 0 && (
             <div className="md-fact">
-              <span className="md-fact-icon"><DollarIcon /></span>
+              <span className="md-fact-icon">
+                <DollarIcon />
+              </span>
               <span className="md-fact-label">Revenue</span>
-              <span className="md-fact-value">{formatCurrency(revenue)}</span>
+              <span className="md-fact-value">{formattedRevenue}</span>
             </div>
           )}
         </div>
 
         {profit !== null && (
-          <p className={`md-money-net ${profit >= 0 ? "md-money-net--positive" : "md-money-net--negative"}`}>
-            {profit >= 0 ? "+" : ""}{formatCurrency(Math.abs(profit))} {profit >= 0 ? "net gain" : "net loss"}
+          <p
+            className={`md-money-net ${profit >= 0 ? "md-money-net--positive" : "md-money-net--negative"}`}
+          >
+            {profit >= 0 ? "+" : ""}
+            {formattedProfit} {profit >= 0 ? "net gain" : "net loss"}
             {multiplier ? ` · ${multiplier.toFixed(1)}× return` : ""}
           </p>
         )}
@@ -687,7 +1029,9 @@ function MovieDetail() {
             <h4 className="md-subheading">Genres</h4>
             <div className="md-companies-row">
               {movie.genres.map((g) => (
-                <span key={g.id} className="md-genre-pill">{g.name}</span>
+                <span key={g.id} className="md-genre-pill">
+                  {g.name}
+                </span>
               ))}
             </div>
           </div>
@@ -700,7 +1044,12 @@ function MovieDetail() {
               {movie.production_companies.map((company) => (
                 <div key={company.id} className="md-company-chip">
                   {company.logo_path ? (
-                    <img src={`${TMDB_IMG}w92${company.logo_path}`} alt={company.name} />
+                    <img
+                      src={`${TMDB_IMG}w92${company.logo_path}`}
+                      alt={company.name}
+                      loading="lazy"
+                      decoding="async"
+                    />
                   ) : (
                     <span>{company.name}</span>
                   )}
@@ -719,7 +1068,17 @@ function MovieDetail() {
             <div className="md-director-spotlight">
               <div className="md-director-photo">
                 {director.profile_path ? (
-                  <img src={`${TMDB_IMG}w185${director.profile_path}`} alt={director.name} />
+                  <img
+                    alt={director.name}
+                    src={`${TMDB_IMG}w185${director.profile_path}`}
+                    srcSet={`
+${TMDB_IMG}w185${director.profile_path} 185w,
+${TMDB_IMG}w300${director.profile_path} 300w
+`}
+                    sizes="120px"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 ) : (
                   <Avatar name={director.name} size={72} />
                 )}
@@ -733,12 +1092,29 @@ function MovieDetail() {
           {movie.cast?.length ? (
             <Rail>
               {movie.cast.map((person) => (
-                <motion.div key={person.id} className="md-cast-card" whileHover={{ y: -8, scale: 1.03 }} transition={{ duration: 0.3, ease: EASE }}>
+                <motion.div
+                  key={person.id}
+                  className="md-cast-card"
+                  whileHover={{ y: -8, scale: 1.03 }}
+                  transition={{ duration: 0.3, ease: EASE }}
+                >
                   <div className="md-cast-photo">
                     {person.profile_path ? (
-                      <img src={`${TMDB_IMG}w185${person.profile_path}`} alt={person.name} />
+                      <img
+                        src={`${TMDB_IMG}w185${person.profile_path}`}
+                        srcSet={`
+        ${TMDB_IMG}w185${person.profile_path} 185w,
+        ${TMDB_IMG}w300${person.profile_path} 300w
+    `}
+                        sizes="120px"
+                        loading="lazy"
+                        decoding="async"
+                        alt={person.name}
+                      />
                     ) : (
-                      <div className="md-cast-fallback"><Avatar name={person.name} size={80} /></div>
+                      <div className="md-cast-fallback">
+                        <Avatar name={person.name} size={80} />
+                      </div>
                     )}
                     <div className="md-cast-caption">
                       <p className="md-cast-name">{person.name}</p>
@@ -761,10 +1137,12 @@ function MovieDetail() {
               <div className="md-video-container">
                 {trailerPlaying ? (
                   <iframe
+                    referrerPolicy="strict-origin-when-cross-origin"
                     src={`https://www.youtube.com/embed/${movie.trailer.key}?autoplay=1&rel=0`}
                     title={movie.trailer.name}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
+                    loading="lazy"
                   />
                 ) : (
                   <button
@@ -779,12 +1157,27 @@ function MovieDetail() {
                       className="md-trailer-play"
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.94 }}
-                      animate={reducedMotion ? {} : { boxShadow: ["0 0 0 0 rgba(240,180,41,0.35)", "0 0 0 22px rgba(240,180,41,0)"] }}
-                      transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
+                      animate={
+                        reducedMotion
+                          ? {}
+                          : {
+                              boxShadow: [
+                                "0 0 0 0 rgba(240,180,41,0.35)",
+                                "0 0 0 22px rgba(240,180,41,0)",
+                              ],
+                            }
+                      }
+                      transition={{
+                        duration: 2.2,
+                        repeat: 5,
+                        ease: "easeOut",
+                      }}
                     >
                       <PlayIcon />
                     </motion.span>
-                    <span className="md-trailer-name">{movie.trailer.name}</span>
+                    <span className="md-trailer-name">
+                      {movie.trailer.name}
+                    </span>
                   </button>
                 )}
               </div>
@@ -801,8 +1194,15 @@ function MovieDetail() {
                   className="md-video-card"
                 >
                   <div className="md-video-thumb">
-                    <img src={`https://img.youtube.com/vi/${video.key}/mqdefault.jpg`} alt={video.name} />
-                    <span className="md-video-play"><PlayIcon /></span>
+                    <img
+                      src={`https://img.youtube.com/vi/${video.key}/mqdefault.jpg`}
+                      alt={video.name}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <span className="md-video-play">
+                      <PlayIcon />
+                    </span>
                   </div>
                   <p className="md-video-name">{video.name}</p>
                   <p className="md-video-type">{video.type}</p>
@@ -820,14 +1220,34 @@ function MovieDetail() {
           <Rail>
             {movie.recommendations.slice(0, 12).map((m) => (
               <Link to={`/movie/${m.id}`} key={m.id} className="md-poster-card">
-                <motion.div className="md-poster-card-inner" whileHover={{ scale: 1.06, y: -8 }} transition={{ duration: 0.3, ease: EASE }}>
+                <motion.div
+                  className="md-poster-card-inner"
+                  whileHover={{ scale: 1.06, y: -8 }}
+                  transition={{ duration: 0.3, ease: EASE }}
+                >
                   {m.poster_path ? (
-                    <img src={`${TMDB_IMG}w342${m.poster_path}`} alt={m.title} />
+                    <img
+                      sizes="160px"
+                      loading="lazy"
+                      decoding="async"
+                      alt={m.title}
+                      src={`${TMDB_IMG}w185${m.poster_path}`}
+                      srcSet={`
+${TMDB_IMG}w185${m.poster_path} 185w,
+${TMDB_IMG}w342${m.poster_path} 342w
+`}
+                    />
                   ) : (
-                    <div className="md-poster-card-fallback"><FilmIcon /></div>
+                    <div className="md-poster-card-fallback">
+                      <FilmIcon />
+                    </div>
                   )}
                   <span className="md-poster-card-scrim" />
-                  {m.vote_average > 0 && <span className="md-poster-card-score">★ {m.vote_average.toFixed(1)}</span>}
+                  {m.vote_average > 0 && (
+                    <span className="md-poster-card-score">
+                      ★ {m.vote_average.toFixed(1)}
+                    </span>
+                  )}
                 </motion.div>
                 <p className="md-poster-card-title">{m.title}</p>
               </Link>
@@ -843,14 +1263,29 @@ function MovieDetail() {
           <Rail>
             {movie.similar.slice(0, 12).map((m) => (
               <Link to={`/movie/${m.id}`} key={m.id} className="md-poster-card">
-                <motion.div className="md-poster-card-inner" whileHover={{ scale: 1.06, y: -8 }} transition={{ duration: 0.3, ease: EASE }}>
+                <motion.div
+                  className="md-poster-card-inner"
+                  whileHover={{ scale: 1.06, y: -8 }}
+                  transition={{ duration: 0.3, ease: EASE }}
+                >
                   {m.poster_path ? (
-                    <img src={`${TMDB_IMG}w342${m.poster_path}`} alt={m.title} />
+                    <img
+                      src={`${TMDB_IMG}w342${m.poster_path}`}
+                      alt={m.title}
+                      loading="lazy"
+                      decoding="async"
+                    />
                   ) : (
-                    <div className="md-poster-card-fallback"><FilmIcon /></div>
+                    <div className="md-poster-card-fallback">
+                      <FilmIcon />
+                    </div>
                   )}
                   <span className="md-poster-card-scrim" />
-                  {m.vote_average > 0 && <span className="md-poster-card-score">★ {m.vote_average.toFixed(1)}</span>}
+                  {m.vote_average > 0 && (
+                    <span className="md-poster-card-score">
+                      ★ {m.vote_average.toFixed(1)}
+                    </span>
+                  )}
                 </motion.div>
                 <p className="md-poster-card-title">{m.title}</p>
               </Link>
@@ -859,15 +1294,20 @@ function MovieDetail() {
         </Section>
       ) : null}
 
-      <RatingModal
-        isOpen={showRatingModal}
-        onClose={() => setShowRatingModal(false)}
-        movieId={movie.id}
-        movieTitle={movie.title}
-        currentRating={userRating}
-        onRated={handleRated}
-        onRemoved={handleRatingRemoved}
-      />
+      {/* Lazy-load RatingModal with Suspense fallback */}
+      <Suspense fallback={null}>
+        {showRatingModal && (
+          <RatingModal
+            isOpen={showRatingModal}
+            onClose={() => setShowRatingModal(false)}
+            movieId={movie.id}
+            movieTitle={movie.title}
+            currentRating={userRating}
+            onRated={handleRated}
+            onRemoved={handleRatingRemoved}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
