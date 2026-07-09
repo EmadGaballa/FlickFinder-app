@@ -27,7 +27,6 @@ export interface UserProfile {
   displayNameUpdatedAt: Date | null;
 }
 
-
 export async function register(data: {
   username: string;
   displayName: string;
@@ -35,16 +34,11 @@ export async function register(data: {
   password: string;
   avatar?: string;
 }): Promise<AuthResult> {
-
   const existingUser = await prisma.user.findFirst({
     where: {
-      OR: [
-        { email: data.email },
-        { username: data.username },
-      ],
+      OR: [{ email: data.email }, { username: data.username }],
     },
   });
-
 
   if (existingUser) {
     throw new AppError(
@@ -54,7 +48,6 @@ export async function register(data: {
         : "Username already taken",
     );
   }
-
 
   if (!isPasswordStrong(data.password)) {
     throw new AppError(
@@ -70,12 +63,7 @@ export async function register(data: {
     );
   }
 
-
-  const passwordHash = await bcrypt.hash(
-    data.password,
-    12
-  );
-
+  const passwordHash = await bcrypt.hash(data.password, 12);
 
   const user = await prisma.user.create({
     data: {
@@ -87,12 +75,10 @@ export async function register(data: {
     },
   });
 
-
   const token = signToken({
     userId: user.id,
     username: user.username,
   });
-
 
   return {
     user: {
@@ -107,48 +93,30 @@ export async function register(data: {
   };
 }
 
-
-
 export async function login(data: {
   email: string;
   password: string;
 }): Promise<AuthResult> {
-
-
   const user = await prisma.user.findUnique({
     where: {
       email: data.email,
     },
   });
 
-
   if (!user) {
-    throw new AppError(
-      401,
-      "Invalid email or password"
-    );
+    throw new AppError(401, "Invalid email or password");
   }
 
-
-  const valid = await bcrypt.compare(
-    data.password,
-    user.passwordHash
-  );
-
+  const valid = await bcrypt.compare(data.password, user.passwordHash);
 
   if (!valid) {
-    throw new AppError(
-      401,
-      "Invalid email or password"
-    );
+    throw new AppError(401, "Invalid email or password");
   }
-
 
   const token = signToken({
     userId: user.id,
     username: user.username,
   });
-
 
   return {
     user: {
@@ -162,8 +130,6 @@ export async function login(data: {
     token,
   };
 }
-
-
 
 /**
  * Production authentication cookie
@@ -178,64 +144,38 @@ export async function login(data: {
  * sameSite = none
  */
 export function getCookieOptions() {
-
-  const isProduction =
-    config.nodeEnv === "production";
-
+  const isProduction = config.nodeEnv === "production";
 
   return {
     httpOnly: true,
-
     secure: isProduction,
-
-    sameSite: isProduction
-      ? ("none" as const)
-      : ("lax" as const),
-
-    maxAge:
-      7 * 24 * 60 * 60 * 1000,
-
+    sameSite: isProduction ? "none" : "lax",
+    domain: isProduction ? ".up.railway.app" : undefined,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",
   };
 }
-
-
 
 export function getClearCookieOptions() {
-
-  const isProduction =
-    config.nodeEnv === "production";
-
+  const isProduction = config.nodeEnv === "production";
 
   return {
-
     httpOnly: true,
-
     secure: isProduction,
-
-    sameSite: isProduction
-      ? ("none" as const)
-      : ("lax" as const),
-
+    sameSite: isProduction ? "none" : "lax",
+    domain: isProduction ? ".up.railway.app" : undefined,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",
   };
 }
 
-
-
-export async function getMe(
-  userId: string
-): Promise<UserProfile> {
-
-
+export async function getMe(userId: string): Promise<UserProfile> {
   const user = await prisma.user.findUnique({
-
     where: {
       id: userId,
     },
 
     select: {
-
       id: true,
       username: true,
       displayName: true,
@@ -243,116 +183,62 @@ export async function getMe(
       avatar: true,
       createdAt: true,
       displayNameUpdatedAt: true,
-
     },
-
   });
 
-
   if (!user) {
-    throw new AppError(
-      404,
-      "User not found"
-    );
+    throw new AppError(404, "User not found");
   }
-
 
   return user;
 }
-
-
-
 
 export async function changePassword(
   userId: string,
   currentPassword: string,
   newPassword: string,
 ): Promise<void> {
-
-
   const user = await prisma.user.findUnique({
     where: {
       id: userId,
     },
   });
 
-
   if (!user) {
-    throw new AppError(
-      404,
-      "User not found"
-    );
+    throw new AppError(404, "User not found");
   }
 
-
-
   if (user.lastPasswordChangedAt) {
-
-
-    const cooldownPeriod =
-      3 * 60 * 60 * 1000;
-
+    const cooldownPeriod = 3 * 60 * 60 * 1000;
 
     const timeSinceLastChange =
-      Date.now() -
-      new Date(
-        user.lastPasswordChangedAt
-      ).getTime();
-
-
+      Date.now() - new Date(user.lastPasswordChangedAt).getTime();
 
     if (timeSinceLastChange < cooldownPeriod) {
+      const remainingTime = cooldownPeriod - timeSinceLastChange;
 
+      const hours = Math.floor(remainingTime / (1000 * 60 * 60));
 
-      const remainingTime =
-        cooldownPeriod -
-        timeSinceLastChange;
-
-
-      const hours =
-        Math.floor(
-          remainingTime /
-          (1000 * 60 * 60)
-        );
-
-
-      const minutes =
-        Math.floor(
-          (remainingTime %
-            (1000 * 60 * 60)) /
-          (1000 * 60)
-        );
-
+      const minutes = Math.floor(
+        (remainingTime % (1000 * 60 * 60)) / (1000 * 60),
+      );
 
       throw new AppError(
         429,
         hours > 0
           ? `You recently changed your password.\n\nPlease wait another ${hours} hour${hours > 1 ? "s" : ""} ${minutes} minute${minutes > 1 ? "s" : ""}.`
-          : `You recently changed your password.\n\nPlease wait another ${minutes} minute${minutes > 1 ? "s" : ""}.`
+          : `You recently changed your password.\n\nPlease wait another ${minutes} minute${minutes > 1 ? "s" : ""}.`,
       );
     }
   }
 
-
-
-  const valid =
-    await bcrypt.compare(
-      currentPassword,
-      user.passwordHash
-    );
-
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
 
   if (!valid) {
-    throw new AppError(
-      401,
-      "Current password is incorrect"
-    );
+    throw new AppError(401, "Current password is incorrect");
   }
 
-
-
   if (!isPasswordStrong(newPassword)) {
-
     throw new AppError(
       400,
       [
@@ -366,113 +252,60 @@ export async function changePassword(
     );
   }
 
-
-
-  const passwordHash =
-    await bcrypt.hash(
-      newPassword,
-      12
-    );
-
+  const passwordHash = await bcrypt.hash(newPassword, 12);
 
   await prisma.user.update({
-
     where: {
       id: userId,
     },
 
     data: {
-
       passwordHash,
 
-      lastPasswordChangedAt:
-        new Date(),
-
+      lastPasswordChangedAt: new Date(),
     },
-
   });
 }
 
-
-
-
-export async function getPasswordCooldownInfo(
-  userId: string,
-): Promise<{
+export async function getPasswordCooldownInfo(userId: string): Promise<{
   canChange: boolean;
   nextAllowedAt?: Date;
 }> {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
 
-
-  const user =
-    await prisma.user.findUnique({
-
-      where: {
-        id: userId,
-      },
-
-      select: {
-        lastPasswordChangedAt: true,
-      },
-
-    });
-
-
+    select: {
+      lastPasswordChangedAt: true,
+    },
+  });
 
   if (!user) {
-
-    throw new AppError(
-      404,
-      "User not found"
-    );
-
+    throw new AppError(404, "User not found");
   }
-
-
 
   if (!user.lastPasswordChangedAt) {
-
     return {
       canChange: true,
     };
-
   }
 
+  const cooldownPeriod = 3 * 60 * 60 * 1000;
 
+  const nextAllowedAt = new Date(
+    new Date(user.lastPasswordChangedAt).getTime() + cooldownPeriod,
+  );
 
-  const cooldownPeriod =
-    3 * 60 * 60 * 1000;
-
-
-
-  const nextAllowedAt =
-    new Date(
-      new Date(
-        user.lastPasswordChangedAt
-      ).getTime()
-      + cooldownPeriod
-    );
-
-
-
-  if (
-    Date.now()
-    >= nextAllowedAt.getTime()
-  ) {
-
+  if (Date.now() >= nextAllowedAt.getTime()) {
     return {
       canChange: true,
     };
-
   }
-
-
 
   return {
-
     canChange: false,
 
     nextAllowedAt,
-
   };
 }

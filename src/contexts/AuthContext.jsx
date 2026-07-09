@@ -40,6 +40,8 @@ export function AuthProvider({ children }) {
   const login = async (credentials) => {
     await authApi.login(credentials);
 
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
     const me = await authApi.me();
 
     setUser(me.user);

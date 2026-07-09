@@ -47,6 +47,8 @@ export async function login(
       authService.getCookieOptions()
     );
 
+    console.log(authService.getCookieOptions());
+
     res.json({
       user: result.user,
     });
