@@ -20,7 +20,9 @@ export function AuthProvider({ children }) {
       }
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const refreshUser = async () => {
@@ -33,15 +35,23 @@ export function AuthProvider({ children }) {
   };
 
   const login = async (credentials) => {
-    const data = await authApi.login(credentials);
-    setUser(data.user);
-    return data;
+    await authApi.login(credentials);
+
+    const me = await authApi.me();
+
+    setUser(me.user);
+
+    return me;
   };
 
   const register = async (userData) => {
-    const data = await authApi.register(userData);
-    setUser(data.user);
-    return data;
+    await authApi.register(userData);
+
+    const me = await authApi.me();
+
+    setUser(me.user);
+
+    return me;
   };
 
   const logout = async () => {
@@ -53,7 +63,17 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        refreshUser,
+        isAuthenticated: !!user,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

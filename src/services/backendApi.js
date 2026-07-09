@@ -11,7 +11,11 @@ async function request(endpoint, options = {}) {
   };
 
   const response = await fetch(`${API_BASE}${endpoint}`, config);
-  const data = await response.json();
+  let data = {};
+
+  try {
+    data = await response.json();
+  } catch { } 
 
   if (!response.ok) {
     throw new Error(data.error || "Something went wrong");

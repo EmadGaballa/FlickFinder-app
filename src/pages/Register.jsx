@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { authApi } from "../services/backendApi";
+import { useAuth } from "../context/AuthContext";
 import AvatarPicker from "../components/AvatarPicker";
 import { getAvatarById } from "../data/avatars/index";
 import PasswordField from "../components/PasswordField";
@@ -22,6 +22,7 @@ function Register() {
   const [serverError, setServerError] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   useEffect(() => {
     document.title = "Create Account — FlickFinder";
@@ -35,20 +36,24 @@ function Register() {
 
   useEffect(() => {
     const passwordValid = isPasswordStrong(form.password);
-    const passwordsMatch = form.password === form.confirmPassword && form.confirmPassword !== "";
+    const passwordsMatch =
+      form.password === form.confirmPassword && form.confirmPassword !== "";
     const hasRequiredFields = form.username && form.displayName && form.email;
     setIsFormValid(passwordValid && passwordsMatch && hasRequiredFields);
   }, [form]);
 
   const validate = () => {
     const errs = {};
-    if (!form.username || form.username.length < 3) errs.username = "Username must be at least 3 characters";
+    if (!form.username || form.username.length < 3)
+      errs.username = "Username must be at least 3 characters";
     if (!form.displayName) errs.displayName = "Display name is required";
-    if (!form.email || !form.email.includes("@")) errs.email = "Valid email is required";
+    if (!form.email || !form.email.includes("@"))
+      errs.email = "Valid email is required";
     if (!isPasswordStrong(form.password)) {
       errs.password = "Password does not meet requirements";
     }
-    if (form.password !== form.confirmPassword) errs.confirmPassword = "Passwords do not match";
+    if (form.password !== form.confirmPassword)
+      errs.confirmPassword = "Passwords do not match";
     return errs;
   };
 
@@ -63,7 +68,7 @@ function Register() {
 
     setLoading(true);
     try {
-      await authApi.register({
+      await register({
         username: form.username,
         displayName: form.displayName,
         email: form.email,
@@ -83,7 +88,10 @@ function Register() {
       <div className="auth-card">
         <div className="auth-header">
           <h1 className="auth-title">Create Account</h1>
-          <p className="auth-subtitle">Join FlickFinder to save favorites, build watchlists, and connect with friends.</p>
+          <p className="auth-subtitle">
+            Join FlickFinder to save favorites, build watchlists, and connect
+            with friends.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
@@ -100,8 +108,12 @@ function Register() {
               placeholder="Choose a unique username"
               autoComplete="username"
             />
-            {errors.username && <span className="form-error">{errors.username}</span>}
-            <span className="form-hint">Letters, numbers, underscores. This cannot be changed later.</span>
+            {errors.username && (
+              <span className="form-error">{errors.username}</span>
+            )}
+            <span className="form-hint">
+              Letters, numbers, underscores. This cannot be changed later.
+            </span>
           </div>
 
           <div className="form-group">
@@ -115,7 +127,9 @@ function Register() {
               placeholder="How others will see you"
               autoComplete="name"
             />
-            {errors.displayName && <span className="form-error">{errors.displayName}</span>}
+            {errors.displayName && (
+              <span className="form-error">{errors.displayName}</span>
+            )}
           </div>
 
           <div className="form-group">
@@ -167,16 +181,22 @@ function Register() {
             </div>
           </div>
 
-          <button type="submit" className="auth-submit" disabled={loading || !isFormValid}>
+          <button
+            type="submit"
+            className="auth-submit"
+            disabled={loading || !isFormValid}
+          >
             {loading ? "Creating account..." : "Create Account"}
           </button>
 
           <p className="auth-footer">
-            Already have an account? <Link to="/login" className="auth-link">Sign in</Link>
+            Already have an account?{" "}
+            <Link to="/login" className="auth-link">
+              Sign in
+            </Link>
           </p>
         </form>
       </div>
-
     </div>
   );
 }

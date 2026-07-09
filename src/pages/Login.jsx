@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { authApi } from "../services/backendApi";
+import { useAuth } from "../context/AuthContext";
 import PasswordField from "../components/PasswordField";
 import "../css/Auth.css";
 
@@ -9,6 +9,7 @@ function Login() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -26,7 +27,8 @@ function Login() {
 
   const validate = () => {
     const errs = {};
-    if (!form.email || !form.email.includes("@")) errs.email = "Valid email is required";
+    if (!form.email || !form.email.includes("@"))
+      errs.email = "Valid email is required";
     if (!form.password) errs.password = "Password is required";
     return errs;
   };
@@ -42,7 +44,7 @@ function Login() {
 
     setLoading(true);
     try {
-      await authApi.login(form);
+      await login(form);
       navigate(from, { replace: true });
     } catch (err) {
       setServerError(err.message);
@@ -56,7 +58,9 @@ function Login() {
       <div className="auth-card">
         <div className="auth-header">
           <h1 className="auth-title">Welcome Back</h1>
-          <p className="auth-subtitle">Sign in to access your favorites, watchlist, and more.</p>
+          <p className="auth-subtitle">
+            Sign in to access your favorites, watchlist, and more.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
@@ -93,7 +97,10 @@ function Login() {
           </button>
 
           <p className="auth-footer">
-            Don't have an account? <Link to="/register" className="auth-link">Create one</Link>
+            Don't have an account?{" "}
+            <Link to="/register" className="auth-link">
+              Create one
+            </Link>
           </p>
         </form>
       </div>
