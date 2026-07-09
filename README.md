@@ -479,7 +479,7 @@ https://www.themoviedb.org/
 
 ## Emad M. Gaballa
 
-Architectural Engineer turned Full-Stack JavaScript Developer.
+Engineer and Full-Stack Developer.
 
 This project represents my transition from architecture into software engineering and showcases my ability to design, build, and deploy a modern full-stack application using industry-standard technologies.
 
