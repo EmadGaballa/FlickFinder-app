@@ -9,7 +9,7 @@ async function request(endpoint, options = {}) {
     ...options,
   };
 
-  const response = await fetch(`${API_BASE}${endpoint}`, config);
+  const response = await fetch(`${API_URL}${endpoint}`, config);
   let data = {};
 
   try {
