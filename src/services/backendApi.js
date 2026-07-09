@@ -1,5 +1,4 @@
-const API_BASE =
-  import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? "/api" : "http://localhost:3001/api");
 
 async function request(endpoint, options = {}) {
   const config = {
@@ -15,7 +14,7 @@ async function request(endpoint, options = {}) {
 
   try {
     data = await response.json();
-  } catch { } 
+  } catch { }
 
   if (!response.ok) {
     throw new Error(data.error || "Something went wrong");
