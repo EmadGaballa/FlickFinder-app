@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://flickfinder.up.railway.app/api/:path*" }
+    { "source": "/api/:path*", "destination": "https://flickerfinder.up.railway.app/api/:path*" }
   ]
 }
