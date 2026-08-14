@@ -1,5 +1,6 @@
 import { CookieOptions } from "express";
 import bcrypt from "bcryptjs";
+import { CookieOptions } from "express";
 import { prisma } from "../prisma/client.js";
 import { signToken } from "../utils/jwt.js";
 import { AppError } from "../middleware/errorHandler.js";
