@@ -1,3 +1,4 @@
+import { CookieOptions } from "express";
 import bcrypt from "bcryptjs";
 import { prisma } from "../prisma/client.js";
 import { signToken } from "../utils/jwt.js";
@@ -143,7 +144,7 @@ export async function login(data: {
  * Railway backend
  * sameSite = none
  */
-export function getCookieOptions() {
+export function getCookieOptions(): CookieOptions {
   const isProduction = config.nodeEnv === "production";
 
   return {
@@ -155,7 +156,7 @@ export function getCookieOptions() {
   };
 }
 
-export function getClearCookieOptions() {
+export function getClearCookieOptions(): CookieOptions {
   const isProduction = config.nodeEnv === "production";
 
   return {
